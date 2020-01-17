@@ -1,4 +1,4 @@
-package extensions
+package za.ac.up.extensions
 
 import org.logicng.datastructures.Tristate
 import org.logicng.formulas.Formula
@@ -6,18 +6,7 @@ import org.logicng.formulas.FormulaFactory
 import org.logicng.formulas.Literal
 import org.logicng.io.parsers.PropositionalParser
 import org.logicng.solvers.MiniSat
-import org.logicng.solvers.SATSolver
-import org.logicng.solvers.sat.GlucoseConfig
-import org.logicng.solvers.sat.GlucoseSyrup
-import org.logicng.solvers.sat.MiniSat2Solver
-import org.logicng.solvers.sat.MiniSatConfig
-import java.io.File
-import java.io.FileWriter
-import java.sql.Time
-import java.text.SimpleDateFormat
-import java.util.*
 import kotlin.math.ceil
-import kotlin.math.exp
 import kotlin.math.log2
 
 

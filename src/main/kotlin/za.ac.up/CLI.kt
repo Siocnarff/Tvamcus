@@ -1,7 +1,7 @@
 package za.ac.up
 
-import extensions.Encoder
-import extensions.Parser
+import za.ac.up.extensions.Encoder
+import za.ac.up.extensions.Parser
 import java.io.FileWriter
 import java.text.ParseException
 import java.time.LocalDateTime

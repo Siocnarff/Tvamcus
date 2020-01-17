@@ -1,14 +1,11 @@
-package extensions
+package za.ac.up.extensions
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import com.google.gson.stream.JsonReader
 import com.google.gson.JsonElement
-import com.google.gson.JsonSyntaxException
 import com.google.gson.reflect.TypeToken
-import java.io.EOFException
 import java.io.File
-import java.io.FileNotFoundException
 
 object Parser {
     data class Model (val predicates: Map<String, Int>, val processes: List<Process>)

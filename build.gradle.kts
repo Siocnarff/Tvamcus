@@ -19,7 +19,12 @@ tasks {
     compileKotlin {
         kotlinOptions.jvmTarget = "1.8"
     }
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = "1.8"
+    //compileTestKotlin {
+    //    kotlinOptions.jvmTarget = "1.8"
+    //}
+    jar {
+        manifest {
+            attributes["Main-Class"] = "za.ac.up.CLI"
+        }
     }
 }
