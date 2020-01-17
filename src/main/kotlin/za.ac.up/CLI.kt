@@ -19,7 +19,7 @@ object CLI {
         val formatter = DateTimeFormatter.BASIC_ISO_DATE
         val dateTime = current.format(formatter)
         //simply adding time to give file a unique name
-        val file = FileWriter("/C:/Code/IdeaProjects/againTVMC/output/date${dateTime}_id${System.currentTimeMillis()}.txt")
+        val file = FileWriter("/C:/Code/Tuks/Development/Tvamcus/output/date${dateTime}_id${System.currentTimeMillis()}.txt")
 
         val encoder = getEncoderFromUser()
         val params = getParametersFromUser()
@@ -50,7 +50,7 @@ object CLI {
             println()
             if(file != null) {
                 try {
-                    val model = Parser.parseFile("/C:/Code/IdeaProjects/againTVMC/inputFiles/$file.json")
+                    val model = Parser.parseFile("/C:/Code/Tuks/Development/Tvamcus/inputFiles/$file.json")
                     println("...parsed")
                     try {
                         return Encoder(model)

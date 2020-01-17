@@ -26,5 +26,10 @@ tasks {
         manifest {
             attributes["Main-Class"] = "za.ac.up.CLI"
         }
+        from(
+            configurations.compileClasspath.get().map {
+                if(it.isDirectory) it else zipTree(it)
+            }
+        )
     }
 }
