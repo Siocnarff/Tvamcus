@@ -1,0 +1,2 @@
+error found
+Program ran for: -2 seconds
