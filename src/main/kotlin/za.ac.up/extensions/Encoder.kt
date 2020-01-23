@@ -100,13 +100,11 @@ class Encoder(private val model: Parser.Model) {
         var operator = ""
         var previousWasPredicate = false
 
-        println(input)
         val expression = if(negate) {
             "(${p.parse(input).negate().nnf()})"
         } else {
             input
         }
-        println("+")
 
         for (c in expression) {
             if (c == ' ' || c == '&' || c == '|' || c == '(' || c == ')') {
@@ -429,7 +427,8 @@ class Encoder(private val model: Parser.Model) {
                     )
                     performanceLog.add(System.nanoTime() - unitStartTimeB)
                     printStepStat(performanceLog.last(), stepResults.last().toString())
-                    if(stepResults.last() == Tristate.TRUE) {
+                    //if(stepResults.last() == Tristate.TRUE) {
+                    if(true) {
                         printSatisfiable(startT = startTime, endT = System.nanoTime(), timestamp = t)
                         printStepStat(performanceLog.last(), stepResults.last().toString())
                         return true

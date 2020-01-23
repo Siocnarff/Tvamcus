@@ -5,12 +5,7 @@
     "(d = -1)": 3,
     "(b = -1)": 1
   },
-  "init": {
-    "(c = -1)": false,
-    "(a = -1)": false,
-    "(d = -1)": false,
-    "(b = -1)": false
-  },
+  "init": {},
   "processes": [
     {
       "states": [

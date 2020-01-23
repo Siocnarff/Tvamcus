@@ -36,7 +36,6 @@ object CLI {
                     val model = Parser.parseFile("/C:/Code/Tuks/Development/Tvamcus/inputFiles/$file.json")
                     println("...parsed")
                     try {
-                        println(model)
                         return Encoder(model)
                     } catch (e: ParseException) {
                         println("Model cannot be encoded.")
