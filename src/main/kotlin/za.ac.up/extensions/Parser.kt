@@ -17,14 +17,12 @@ object Parser {
         val id: Int,
         val transitions: MutableList<Transition>
     )
-
     data class Transition (
         val source: Int,
         val destination: Int,
         val assignments: List<Assignment>,
         var guard: String
     )
-
     data class Assignment (
         var RHS: String,
         val predicate: Int
