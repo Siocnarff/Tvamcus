@@ -8,9 +8,14 @@ import com.google.gson.reflect.TypeToken
 import java.io.File
 
 object Parser {
-    data class Model (val predicates: Map<String, Int>, val processes: List<Process>)
+    data class Model (
+        val predicates: Map<String, Int>,
+        val init: Map<String, Boolean>,
+        val processes: List<Process>
+    )
 
     private var predicates: MutableMap<String, Int> = mutableMapOf()
+    private var init: MutableMap<String, Boolean> = mutableMapOf()
     private val processes: MutableList<Process> = mutableListOf()
 
     data class Process (
@@ -151,9 +156,13 @@ object Parser {
         val parser = JsonParser()
         val rootNode: JsonElement = parser.parse(jsonReader)
         val predicatesJson: JsonElement = rootNode.asJsonObject.get("predicates")
+        val initJson: JsonElement = rootNode.asJsonObject.get("init")
         val processesJson: JsonElement = rootNode.asJsonObject.get("processes")
-        val type = object : TypeToken<MutableMap<String, Int>>() {}.type
-        predicates = gson.fromJson(predicatesJson, type)
+        val typeA = object : TypeToken<MutableMap<String, Int>>() {}.type
+        val typeB = object : TypeToken<MutableMap<String, Boolean>>() {}.type
+        predicates = gson.fromJson(predicatesJson, typeA)
+        init = gson.fromJson(initJson, typeB)
+
         for ((idCounter, process) in processesJson.asJsonArray.withIndex()) {
             processes.add(Process(id = idCounter, transitions = mutableListOf()))
             for (node in process.asJsonObject.get("states").asJsonArray) {
@@ -170,6 +179,6 @@ object Parser {
                 }
             }
         }
-        return Model(predicates, processes)
+        return Model(predicates, init, processes)
     }
 }

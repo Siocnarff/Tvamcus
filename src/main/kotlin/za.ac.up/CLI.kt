@@ -19,7 +19,8 @@ object CLI {
         val encoder = getEncoderFromUser()
         val params = getParametersFromUser()
         try {
-            encoder.Evaluator().evaluate(params)
+            val ev = encoder.Evaluator("reachability")
+            ev.evaluate(params)
         } catch (e: Exception) {
             println(e.localizedMessage)
         }
@@ -35,7 +36,7 @@ object CLI {
                     val model = Parser.parseFile("/C:/Code/Tuks/Development/Tvamcus/inputFiles/$file.json")
                     println("...parsed")
                     try {
-                        return Encoder(model, "reachability")
+                        return Encoder(model)
                     } catch (e: ParseException) {
                         println("Model cannot be encoded.")
                         println("Please ensure that the json file follows the required specifications.")

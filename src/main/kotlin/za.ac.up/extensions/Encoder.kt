@@ -8,37 +8,24 @@ import org.logicng.solvers.MiniSat
 import kotlin.math.ceil
 import kotlin.math.log2
 
-class Encoder(private val model: Parser.Model, private val propertyName: String) {
-
-    private val formulaTemplate: MutableList<Link> = mutableListOf()
-    private val startStopTimes = mutableListOf<Pair<String, Long>>()
+class Encoder(private val model: Parser.Model) {
 
     data class Conditions(val eLocation: Int, val bound: Int)
-    private data class Transition(val guard: String, val assignments: List<String>)
-    private data class Link(
+    data class Transition(val guard: String, val assignments: List<String>)
+    data class Link(
         val oldLocation: String,
         val transition: Transition,
         val newLocation: String,
-        val idle: List<String>,
-        val stateRecord: List<String>
+        val idle: List<String>
     )
-    private data class StepStat(
-        val count: Int,
-        val startTime: Long,
-        val timePerformance: MutableList<Long> = mutableListOf(),
-        val results: MutableList<Tristate> = mutableListOf()
-    )
-
+    private val formulaTemplate: MutableList<Link> = mutableListOf()
     companion object {
         private val ff = FormulaFactory()
         private val p = PropositionalParser(ff)
         private val solver: MiniSat = MiniSat.glucose(ff)
     }
-
     init {
-        startStopTimes.add(Pair("Start", System.nanoTime()))
         encodeModel()
-        startStopTimes.add(Pair("Stop", System.nanoTime()))
     }
 
     //=================================================================================================================
@@ -95,17 +82,13 @@ class Encoder(private val model: Parser.Model, private val propertyName: String)
             when (val p = this.substring(1)) {
                 "${'$'}true" -> "${'$'}false"
                 "${'$'}false" -> "${'$'}true"
-                else -> {
-                    "((${p}_${timestamp}_u & unknown) | (~${p}_${timestamp}_u & ~${p}_${timestamp}_t))"
-                }
+                else -> "((${p}_${timestamp}_u & unknown) | (~${p}_${timestamp}_u & ~${p}_${timestamp}_t))"
             }
         } else {
             when (this) {
                 "${'$'}true" -> "${'$'}true"
                 "${'$'}false" -> "${'$'}false"
-                else -> {
-                    "((${this}_${timestamp}_u & unknown) | (~${this}_${timestamp} & ${this}_${timestamp}))"
-                }
+                else -> "((${this}_${timestamp}_u & unknown) | (~${this}_${timestamp}_u & ${this}_${timestamp}_t))"
             }
         }
     }
@@ -273,73 +256,28 @@ class Encoder(private val model: Parser.Model, private val propertyName: String)
         return Transition(guard = encGuard(t.guard), assignments = conjunctOver)
     }
 
-    //by definition ?
-    private fun encStateRecord(iIndexedVariables: List<String>): List<String> {
-        val bigAnd = mutableListOf<String>()
-        bigAnd.add("(rd_I <-> (re_i | rd_i))")
-        iIndexedVariables.forEach {
-            bigAnd.add(
-                "(${it.replace("i", "I")}_c <-> ((re_i & ~rd_i) -> $it) & (~(re_i & ~rd_i) -> ${it}_c)))"
-            )
-        }
-        return bigAnd
-    }
-
     //this function creates our encoded formulaTemplate
     private fun encodeModel() {
         for((pId, process) in model.processes.withIndex()) {
             for (t in process.transitions) {
-                val iIndexedVariables = mutableListOf<String>()
                 val digit = digitRequired(numberOfLocations(process))
-                //encode based on definitions in original paper
-                val oldLocation = (t.source).encLocation("i", pId, digit)
-                val transition = encTransition(t)
-                val newLocation = (t.destination).encLocation("I", pId, digit)
-                val idle = idleAllExcept(pId)
-                //extract all original variables to separate list for state-recording
-                if (propertyName == "liveness") {
-                    iIndexedVariables += oldLocation.extractVariablesToList()
-                    transition.assignments.forEach { iIndexedVariables += it.extractVariablesToList() }
-                    iIndexedVariables += newLocation.extractVariablesToList()
-                    idle.forEach { iIndexedVariables += it.extractVariablesToList() }
-                }
-                //place encoded strings in Link and if testing for liveness record the state using definition ?
                 formulaTemplate.add(
                     Link(
-                        oldLocation,
-                        transition,
-                        newLocation,
-                        idle,
-                        if (propertyName == "liveness") encStateRecord(iIndexedVariables.distinct()) else mutableListOf()
+                        (t.source).encLocation("i", pId, digit),
+                        encTransition(t),
+                        (t.destination).encLocation("I", pId, digit),
+                        idleAllExcept(pId)
                     )
                 )
             }
         }
         println("...modelEncoded")
     }
-    //helper function
-    //extracts variables that are i indexed from any string, ignoring operands and constants
-    private fun String.extractVariablesToList(indexCondition: String = "i"): MutableList<String> {
-        var varStr = this.replace("unknown", "").replace("${"$"}true", "").replace("${"$"}false", "")
-        val variables = mutableListOf<String>()
-        while(varStr.isNotEmpty()) {
-            varStr = varStr.dropWhile { it == '(' || it == ')' || it == '-' || it == '>' || it == '<' || it == '&' || it == '|' || it == '~' }
-            val variable = varStr.substringBefore(' ')
-            if(variable.contains(indexCondition)) {
-                variables.add(variable)
-            }
-            varStr = varStr.substringAfter(' ')
-        }
-        return variables
-    }
 
     //=================================================================================================================
     //=================================================== Evaluator ===================================================
     //=================================================================================================================
-    inner class Evaluator() {
-
-        private val statistics = mutableListOf<StepStat>()
-        private var formula = init()
+    inner class Evaluator(private val evalType: String) {
 
         private fun Formula.modifiedWith(wString: String): Formula {
             //now only works to modify locations of correctness
@@ -379,16 +317,51 @@ class Encoder(private val model: Parser.Model, private val propertyName: String)
 
         //makes formula from formulaTemplate, using input timestamp as lower bound
         private infix fun Link.toFormulaWithTimestamp(t: Int): Formula {
-            val idleFormula = mutableListOf<Formula>()
+            val bigAnd = mutableListOf<Formula>()
             idle.forEach{
-                idleFormula.add(p.parse(it insertTimestamp t))
+                bigAnd.add(p.parse(it insertTimestamp t))
+            }
+            if(evalType == "liveness") {
+                this.encStateRecord().forEach { bigAnd.add(p.parse(it insertTimestamp t)) }
             }
             return ff.and(
                 p.parse(oldLocation insertTimestamp t),
                 transition toFormulaWithTimestamp t,
                 p.parse(newLocation insertTimestamp t),
-                ff.and(idleFormula)
+                ff.and(bigAnd)
             )
+        }
+        //helper functions
+        //extracts variables that are i indexed from any string, ignoring operands and constants
+        private fun String.extractVariablesToList(indexCondition: String = "i"): MutableList<String> {
+            var varStr = this.replace("unknown", "").replace("${"$"}true", "").replace("${"$"}false", "")
+            val variables = mutableListOf<String>()
+            while(varStr.isNotEmpty()) {
+                varStr = varStr.dropWhile { it == '(' || it == ')' || it == '-' || it == '>' || it == '<' || it == '&' || it == '|' || it == '~' }
+                val variable = varStr.substringBefore(' ')
+                if(variable.contains(indexCondition)) {
+                    variables.add(variable)
+                }
+                varStr = varStr.substringAfter(' ')
+            }
+            return variables
+        }
+        //by definition ?
+        private fun Link.encStateRecord(): List<String> {
+            val bigAnd = mutableListOf<String>()
+            val iIndexedVariables = mutableListOf<String>()
+            iIndexedVariables += this.oldLocation.extractVariablesToList()
+            iIndexedVariables += this.newLocation.extractVariablesToList()
+            iIndexedVariables += this.transition.guard.extractVariablesToList()
+            this.transition.assignments.forEach { iIndexedVariables += it.extractVariablesToList() }
+            this.idle.forEach { iIndexedVariables += it.extractVariablesToList() }
+            bigAnd.add("(rd_I <-> (re_i | rd_i))")
+            iIndexedVariables.distinct().forEach {
+                bigAnd.add(
+                    "(${it.replace("i", "I")}_c <-> ((re_i & ~rd_i) -> $it) & (~(re_i & ~rd_i) -> ${it}_c)))"
+                )
+            }
+            return bigAnd
         }
 
         //by Definition 11/12?
@@ -399,8 +372,13 @@ class Encoder(private val model: Parser.Model, private val propertyName: String)
                 conjunctOver.add(p.parse(0.encLocation( "0", pId, digit)))
             }
             for(predicate in model.predicates) {
+                val initAs: Boolean ?= model.init[predicate.key]
                 conjunctOver.add(
-                    p.parse(("${predicate.value}").encSetTrue("0"))
+                    if(initAs != null && !initAs) {
+                        p.parse(("${predicate.value}").encSetFalse("0"))
+                    } else {
+                        p.parse(("${predicate.value}").encSetTrue("0"))
+                    }
                 )
             }
             return ff.and(conjunctOver)
@@ -417,6 +395,7 @@ class Encoder(private val model: Parser.Model, private val propertyName: String)
         }
 
         fun evaluate (params: Conditions): Boolean {
+
             val performanceLog = mutableListOf<Long>()
             val stepResults = mutableListOf<Tristate>()
             val startTime = System.nanoTime()
@@ -438,6 +417,7 @@ class Encoder(private val model: Parser.Model, private val propertyName: String)
                 )
                 performanceLog.add(System.nanoTime() - unitStartTimeA)
                 printStepStat(performanceLog.last())
+                println(stepResults.last())
                 if(stepResults.last() == Tristate.TRUE) {
                     print("k(b)=$t")
                     val unitStartTimeB = System.nanoTime()
