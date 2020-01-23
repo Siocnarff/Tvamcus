@@ -174,7 +174,7 @@ object Parser {
                         processes[idCounter].transitions.last().guard
                     )
                     processes[idCounter].transitions.last().assignments.forEach {
-                        it.RHS = it.RHS.replace("true", "${'$'}true").replace("false", "${'$'}false")
+                        it.RHS = standardize(it.RHS)
                     }
                 }
             }

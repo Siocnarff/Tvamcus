@@ -11,8 +11,8 @@ fun printSatisfiable(startT: Long, endT: Long, timestamp: Int) {
     println("__________________________________________________________________________________________________")
 }
 
-fun printStepStat(timeNs: Long) {
-    println("....${timeNs/1000000}ms    ")
+fun printStepStat(timeNs: Long, result: String) {
+    println(" -> ${if (result == "TRUE") "T" else "F"}   ${timeNs/1000000}ms")
 }
 
 fun printNoErrorFound(startT: Long, endT: Long, maxBound: Int) {
