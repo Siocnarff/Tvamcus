@@ -10,7 +10,7 @@ import kotlin.math.log2
 
 class Encoder(private val model: Parser.Model) {
 
-    data class Conditions(val eLocation: Int, val bound: Int)
+    data class Test(val type: String, val progress_i: String = "", val eLocation: Int = -1)
     data class Transition(val guard: String, val assignments: List<String>)
     data class Link(
         val oldLocation: String,
@@ -277,7 +277,8 @@ class Encoder(private val model: Parser.Model) {
     //=================================================================================================================
     //=================================================== Evaluator ===================================================
     //=================================================================================================================
-    inner class Evaluator(private val evalType: String) {
+
+    inner class Evaluator(private val test: Test) {
 
         private fun Formula.modifiedWith(wString: String): Formula {
             //now only works to modify locations of correctness
@@ -317,37 +318,27 @@ class Encoder(private val model: Parser.Model) {
 
         //makes formula from formulaTemplate, using input timestamp as lower bound
         private infix fun Link.toFormulaWithTimestamp(t: Int): Formula {
-            val bigAnd = mutableListOf<Formula>()
+            val idleFormula = mutableListOf<Formula>()
+            val stateRecord = mutableListOf<Formula>()
             idle.forEach{
-                bigAnd.add(p.parse(it insertTimestamp t))
+                idleFormula.add(p.parse(it insertTimestamp t))
             }
-            if(evalType == "liveness") {
-                this.encStateRecord().forEach { bigAnd.add(p.parse(it insertTimestamp t)) }
+            if(test.type == "liveness") {
+                this.encStateRecord(test).forEach {
+                    stateRecord.add(p.parse(it insertTimestamp t))
+                }
             }
             return ff.and(
                 p.parse(oldLocation insertTimestamp t),
                 transition toFormulaWithTimestamp t,
                 p.parse(newLocation insertTimestamp t),
-                ff.and(bigAnd)
+                ff.and(idleFormula),
+                ff.and(stateRecord)
             )
         }
         //helper functions
-        //extracts variables that are i indexed from any string, ignoring operands and constants
-        private fun String.extractVariablesToList(indexCondition: String = "i"): MutableList<String> {
-            var varStr = this.replace("unknown", "").replace("${"$"}true", "").replace("${"$"}false", "")
-            val variables = mutableListOf<String>()
-            while(varStr.isNotEmpty()) {
-                varStr = varStr.dropWhile { it == '(' || it == ')' || it == '-' || it == '>' || it == '<' || it == '&' || it == '|' || it == '~' }
-                val variable = varStr.substringBefore(' ')
-                if(variable.contains(indexCondition)) {
-                    variables.add(variable)
-                }
-                varStr = varStr.substringAfter(' ')
-            }
-            return variables
-        }
         //by definition ?
-        private fun Link.encStateRecord(): List<String> {
+        private fun Link.encStateRecord(test: Test): List<String> {
             val bigAnd = mutableListOf<String>()
             val iIndexedVariables = mutableListOf<String>()
             iIndexedVariables += this.oldLocation.extractVariablesToList()
@@ -361,7 +352,22 @@ class Encoder(private val model: Parser.Model) {
                     "(${it.replace("i", "I")}_c <-> ((re_i & ~rd_i) -> $it) & (~(re_i & ~rd_i) -> ${it}_c)))"
                 )
             }
+            bigAnd.add("(live_I <-> (live_i | ((re_i | rd_i) & ${test.progress_i})))")
             return bigAnd
+        }
+        //extracts variables that are i indexed from any string, ignoring operands and constants
+        private fun String.extractVariablesToList(indexCondition: String = "i"): MutableList<String> {
+            var varStr = this.replace("unknown", "").replace("${"$"}true", "").replace("${"$"}false", "")
+            val variables = mutableListOf<String>()
+            while(varStr.isNotEmpty()) {
+                varStr = varStr.dropWhile { it == '(' || it == ')' || it == '-' || it == '>' || it == '<' || it == '&' || it == '|' || it == '~' }
+                val variable = varStr.substringBefore(' ')
+                if(variable.contains(indexCondition)) {
+                    variables.add(variable)
+                }
+                varStr = varStr.substringAfter(' ')
+            }
+            return variables
         }
 
         //by Definition 11/12?
@@ -394,16 +400,15 @@ class Encoder(private val model: Parser.Model) {
             return ff.and(conjunctOver)
         }
 
-        fun evaluate (params: Conditions): Boolean {
-
+        fun evaluate (bound: Int): Boolean {
             val performanceLog = mutableListOf<Long>()
             val stepResults = mutableListOf<Tristate>()
             val startTime = System.nanoTime()
 
             var formula = init()
-            for(t in 0 until params.bound + 1) {
+            for(t in 0 until bound + 1) {
                 val w = "w_${t}"
-                val error = errorLocation(params.eLocation, t)
+                val error = errorLocation(test.eLocation, t)
                 val correct = error.negate().cnf()
 
                 print("k(a)=$t")
@@ -427,8 +432,7 @@ class Encoder(private val model: Parser.Model) {
                     )
                     performanceLog.add(System.nanoTime() - unitStartTimeB)
                     printStepStat(performanceLog.last(), stepResults.last().toString())
-                    //if(stepResults.last() == Tristate.TRUE) {
-                    if(true) {
+                    if(stepResults.last() == Tristate.TRUE) {
                         printSatisfiable(startT = startTime, endT = System.nanoTime(), timestamp = t)
                         printStepStat(performanceLog.last(), stepResults.last().toString())
                         return true
@@ -437,7 +441,7 @@ class Encoder(private val model: Parser.Model) {
                 solver.add(ff.literal(w, true))
                 formula = formulaForTimestamp(t)
             }
-            printNoErrorFound(startTime, System.nanoTime(), params.bound)
+            printNoErrorFound(startTime, System.nanoTime(), bound)
             return false
         }
     }

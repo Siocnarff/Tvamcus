@@ -16,17 +16,17 @@ object CLI {
         val dateTime = current.format(formatter)
         val startTime = System.nanoTime()
         */
-        val encoder = getEncoderFromUser()
-        val params = getParametersFromUser()
+        val encoder = getEncoder()
+        val test = getTest()
         try {
-            val ev = encoder.Evaluator("reachability")
-            ev.evaluate(params)
+            val ev = encoder.Evaluator(test)
+            ev.evaluate(getBound())
         } catch (e: Exception) {
             println(e.localizedMessage)
         }
     }
 
-    private fun getEncoderFromUser(): Encoder {
+    private fun getEncoder(): Encoder {
         do {
             print("Input file name: ")
             val file = readLine()
@@ -51,17 +51,43 @@ object CLI {
         } while (true)
     }
 
-    private fun getParametersFromUser(): Encoder.Conditions {
-        do {
-            print("Error Location (Int): ")
-            val eLocation = readLine()
-            if(eLocation != null && eLocation.toInt() >= 0) {
-                print("Upper Bound (Int): ")
-                val bound = readLine()
-                if(bound != null && bound.toInt() >= 0) {
-                    println()
-                    return Encoder.Conditions(eLocation.toInt(), bound.toInt())
+    private fun getTest(): Encoder.Test {
+        print("\nLiveness or Reachability? (L/R): ")
+        val type = readLine()
+        if(type?.decapitalize() == "l" || type?.decapitalize() ==  "liveness") {
+            do {
+                print("Progress Formula: ")
+                val progress = readLine()
+                if(progress != null) {
+                    return Encoder.Test("liveness", progress_i = progress)
+                } else {
+                    println("Formula must be sound and in unparsed string format.")
+                    print("Please try again - ")
                 }
+            } while(true)
+        } else {
+            do {
+                print("Error Location: ")
+                val eLoc = readLine()
+                if(eLoc != null && eLoc.toInt() > 0) {
+                    return Encoder.Test("reachability", eLocation = eLoc.toInt())
+                } else {
+                    println("Error Location has to be a non-negative integer.")
+                    print("Please try again - ")
+                }
+            } while(true)
+        }
+    }
+
+    private fun getBound(): Int {
+        do {
+            print("Upper Bound: ")
+            val bound = readLine()
+            if(bound != null && bound.toInt() > 0) {
+                return bound.toInt()
+            } else {
+                println("Bound has to be a non-negative integer.")
+                print("Please try again - ")
             }
         } while (true)
     }
