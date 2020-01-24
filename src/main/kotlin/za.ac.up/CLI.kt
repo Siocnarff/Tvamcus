@@ -22,7 +22,7 @@ object CLI {
             val encoder = getEncoder()
             val test = getTest()
             val ev = encoder.Evaluator(test)
-            ev.evaluate(getBound())
+            ev.evaluateNoOptimization(getBound())
 
         } catch (e: Exception) {
 

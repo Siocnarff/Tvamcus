@@ -290,34 +290,37 @@ class Encoder(private val model: Parser.Model) {
 
         private val predicates = mutableListOf<String>()
         private val processesToCheck = mutableListOf<Int>()
+
         init {
             processesToCheck += (test.processList).extractCSList()
-            if(test.type == "liveness") {
+            if (test.type == "liveness") {
                 derivePredicates()
             }
         }
+
         //helper function
         private fun derivePredicates() {
-            for(p in model.predicates) {
+            for (p in model.predicates) {
                 predicates.add("${p.value}_i_u")
                 predicates.add("${p.value}_i_t")
             }
-            for((pId, process) in model.processes.withIndex()) {
-                for(d in 0 until digitRequired(numberOfLocations(process))) {
+            for ((pId, process) in model.processes.withIndex()) {
+                for (d in 0 until digitRequired(numberOfLocations(process))) {
                     predicates.add("n_i_${pId}_${d}")
                 }
             }
         }
+
         //helper function
         private fun String.extractCSList(): MutableList<Int> {
-            var listTrimmed = this.dropLastWhile {it == ')'}.dropWhile { it == '(' }
+            var listTrimmed = this.dropLastWhile { it == ')' }.dropWhile { it == '(' }
             val list = mutableListOf<Int>()
-            if(listTrimmed.decapitalize() == "all" || listTrimmed.decapitalize() == "a") {
+            if (listTrimmed.decapitalize() == "all" || listTrimmed.decapitalize() == "a") {
                 for (pId in model.processes.indices) {
                     list.add(pId)
                 }
             } else {
-                while(listTrimmed.contains(',')) {
+                while (listTrimmed.contains(',')) {
                     list.add(listTrimmed.substringBefore(',').trim().toInt())
                     listTrimmed = listTrimmed.substringAfter(',').trim()
                 }
@@ -329,7 +332,7 @@ class Encoder(private val model: Parser.Model) {
         //formula creation function
         private fun formulaForTimestamp(t: Int): Formula {
             val bigOr = mutableListOf<Formula>()
-            for(link in formulaTemplate) {
+            for (link in formulaTemplate) {
                 bigOr.add(link toFormulaWithTimestamp t)
             }
             return ff.or(bigOr)
@@ -343,9 +346,9 @@ class Encoder(private val model: Parser.Model) {
             val w = p.parse(wString)
             val disjointOver = mutableListOf(w)
             val conjunctOver = mutableListOf<Formula>()
-            conjunctOver.add( ff.or(this, w.negate()))
-            disjointOver.add( this.negate() )
-            conjunctOver.add( ff.or(disjointOver) )
+            conjunctOver.add(ff.or(this, w.negate()))
+            disjointOver.add(this.negate())
+            conjunctOver.add(ff.or(disjointOver))
             return ff.and(conjunctOver)
         }
 
@@ -360,19 +363,20 @@ class Encoder(private val model: Parser.Model) {
             }
             return ff.and(assignmentsFormula)
         }
+
         //helper function
         private infix fun String.insertTimestamp(t: Int): String {
-            return this.replace("i", "$t").replace("I","${t + 1}")
+            return this.replace("i", "$t").replace("I", "${t + 1}")
         }
 
         //makes formula from formulaTemplate, using input timestamp as lower bound
         private infix fun Link.toFormulaWithTimestamp(t: Int): Formula {
             val idleFormula = mutableListOf<Formula>()
             val stateRecord = mutableListOf<Formula>()
-            idle.forEach{
+            idle.forEach {
                 idleFormula.add(p.parse(it insertTimestamp t))
             }
-            if(test.type == "liveness") {
+            if (test.type == "liveness") {
                 encStateRecord().forEach {
                     stateRecord.add(p.parse(it insertTimestamp t))
                 }
@@ -385,6 +389,7 @@ class Encoder(private val model: Parser.Model) {
                 ff.and(stateRecord)
             )
         }
+
         //helper functions
         //by definition ?
         private fun encStateRecord(): List<String> {
@@ -398,10 +403,11 @@ class Encoder(private val model: Parser.Model) {
             bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${encProgress(processesToCheck)})))")
             return bigAnd
         }
+
         //helper function
         private fun encProgress(toCheck: MutableList<Int>): String {
             var progress = ""
-            for(pId in toCheck) {
+            for (pId in toCheck) {
                 val process = model.processes[pId]
                 progress += test.location.encLocation(pId = pId, digit = digitRequired(numberOfLocations(process)))
                 progress += " ${test.operator} "
@@ -412,21 +418,21 @@ class Encoder(private val model: Parser.Model) {
         //by Definition 11/12?
         private fun init(): Formula {
             val conjunctOver = mutableListOf<Formula>()
-            for((pId, process) in model.processes.withIndex()) {
+            for ((pId, process) in model.processes.withIndex()) {
                 val digit = digitRequired(numberOfLocations(process))
-                conjunctOver.add(p.parse(0.encLocation( "0", pId, digit, copy = (test.type == "liveness"))))
+                conjunctOver.add(p.parse(0.encLocation("0", pId, digit, copy = (test.type == "liveness"))))
             }
-            for(predicate in model.predicates) {
-                val initAs: Boolean ?= model.init[predicate.key]
+            for (predicate in model.predicates) {
+                val initAs: Boolean? = model.init[predicate.key]
                 conjunctOver.add(
-                    if(initAs != null && !initAs) {
+                    if (initAs != null && !initAs) {
                         p.parse(("${predicate.value}").encSetFalse("0", copy = (test.type == "liveness")))
                     } else {
                         p.parse(("${predicate.value}").encSetTrue("0", copy = (test.type == "liveness")))
                     }
                 )
             }
-            if(test.type == "liveness") {
+            if (test.type == "liveness") {
                 conjunctOver.add(p.parse("~rd_0 & ~lv_0"))
             }
             return ff.and(conjunctOver)
@@ -435,12 +441,12 @@ class Encoder(private val model: Parser.Model) {
         //by Definition 11/12?
         private fun errorLocation(e: Int, bound: Int = 10): Formula {
             val toJoin = mutableListOf<Formula>()
-            for(pId in processesToCheck) {
+            for (pId in processesToCheck) {
                 val process = model.processes[pId]
                 val digit = digitRequired(numberOfLocations(process))
                 toJoin.add(p.parse(e.encLocation(bound.toString(), pId, digit)))
             }
-            return if(test.operator == "|") ff.or(toJoin) else ff.and(toJoin)
+            return if (test.operator == "|") ff.or(toJoin) else ff.and(toJoin)
         }
 
         private fun livenessProperty(t: Int): Formula {
@@ -451,13 +457,13 @@ class Encoder(private val model: Parser.Model) {
             return ff.and(bigAnd)
         }
 
-        fun evaluate (bound: Int): Boolean {
+        fun evaluate(bound: Int): Boolean {
             val performanceLog = mutableListOf<Long>()
             val stepResults = mutableListOf<Tristate>()
             val startTime = System.nanoTime()
 
             var formula = init()
-            for(t in 0 until bound + 1) {
+            for (t in 0 until bound + 1) {
                 val w = "w_${t}"
                 val property = if (test.type == "liveness") livenessProperty(t) else errorLocation(test.location, t)
                 val correct = property.negate().cnf()
@@ -474,7 +480,7 @@ class Encoder(private val model: Parser.Model) {
                 )
                 performanceLog.add(System.nanoTime() - unitStartTimeA)
                 printStepStat(performanceLog.last(), stepResults.last().toString())
-                if(stepResults.last() == Tristate.TRUE) {
+                if (stepResults.last() == Tristate.TRUE) {
                     print(" k(b)=$t")
                     val unitStartTimeB = System.nanoTime()
                     stepResults.add(
@@ -484,7 +490,7 @@ class Encoder(private val model: Parser.Model) {
                     )
                     performanceLog.add(System.nanoTime() - unitStartTimeB)
                     printStepStat(performanceLog.last(), stepResults.last().toString())
-                    if(stepResults.last() == Tristate.TRUE) {
+                    if (stepResults.last() == Tristate.TRUE) {
                         printSatisfiable(startT = startTime, endT = System.nanoTime(), timestamp = t)
                         return true
                     }
@@ -494,6 +500,42 @@ class Encoder(private val model: Parser.Model) {
             }
             printNoErrorFound(startTime, System.nanoTime(), bound)
             return false
+        }
+
+        fun evaluateNoOptimization(bound: Int) {
+            val performanceLog = mutableListOf<Long>()
+            val stepResults = mutableListOf<Tristate>()
+            val startTime = System.nanoTime()
+
+            var formula = init()
+            for (t in 0 until bound) {
+                val property = if (test.type == "liveness") livenessProperty(t) else errorLocation(test.location, t)
+
+                print(" k(a)=$t")
+                val unitStartTimeA = System.nanoTime()
+                solver.add(ff.and(formula, property, p.parse("unknown")))
+                stepResults.add(solver.sat())
+                solver.reset()
+                performanceLog.add(System.nanoTime() - unitStartTimeA)
+                printStepStat(performanceLog.last(), stepResults.last().toString())
+                if (stepResults.last() == Tristate.TRUE) {
+                    print(" k(b)=$t")
+                    val unitStartTimeB = System.nanoTime()
+                    solver.add(ff.and(formula, property, p.parse("~unknown")))
+                    stepResults.add(solver.sat())
+                    solver.reset()
+                    performanceLog.add(System.nanoTime() - unitStartTimeB)
+                    printStepStat(performanceLog.last(), stepResults.last().toString())
+                    if (stepResults.last() == Tristate.TRUE) {
+                        printSatisfiable(startT = startTime, endT = System.nanoTime(), timestamp = t)
+                        println(stepResults)
+                        return
+                    }
+                }
+                formula = ff.and(formula, formulaForTimestamp(t))
+            }
+            printNoErrorFound(startTime, System.nanoTime(), bound)
+            println(stepResults)
         }
     }
 }
