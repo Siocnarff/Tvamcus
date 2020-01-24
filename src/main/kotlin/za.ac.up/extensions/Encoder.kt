@@ -411,7 +411,7 @@ class Encoder(private val model: Parser.Model) {
                 val error = errorLocation(test.eLocation, t)
                 val correct = error.negate().cnf()
 
-                print("k(a)=$t")
+                print(" k(a)=$t")
                 val unitStartTimeA = System.nanoTime()
                 solver.add(formula)
                 solver.add(correct.modifiedWith(w))
@@ -423,7 +423,7 @@ class Encoder(private val model: Parser.Model) {
                 performanceLog.add(System.nanoTime() - unitStartTimeA)
                 printStepStat(performanceLog.last(), stepResults.last().toString())
                 if(stepResults.last() == Tristate.TRUE) {
-                    print("k(b)=$t")
+                    print(" k(b)=$t")
                     val unitStartTimeB = System.nanoTime()
                     stepResults.add(
                         solver.sat(
@@ -434,7 +434,6 @@ class Encoder(private val model: Parser.Model) {
                     printStepStat(performanceLog.last(), stepResults.last().toString())
                     if(stepResults.last() == Tristate.TRUE) {
                         printSatisfiable(startT = startTime, endT = System.nanoTime(), timestamp = t)
-                        printStepStat(performanceLog.last(), stepResults.last().toString())
                         return true
                     }
                 }

@@ -16,13 +16,17 @@ object CLI {
         val dateTime = current.format(formatter)
         val startTime = System.nanoTime()
         */
-        val encoder = getEncoder()
-        val test = getTest()
         try {
+
+            val encoder = getEncoder()
+            val test = getTest()
             val ev = encoder.Evaluator(test)
             ev.evaluate(getBound())
+
         } catch (e: Exception) {
+
             println(e.localizedMessage)
+
         }
     }
 
@@ -84,6 +88,7 @@ object CLI {
             print("Upper Bound: ")
             val bound = readLine()
             if(bound != null && bound.toInt() > 0) {
+                println()
                 return bound.toInt()
             } else {
                 println("Bound has to be a non-negative integer.")
