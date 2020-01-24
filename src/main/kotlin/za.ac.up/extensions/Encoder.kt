@@ -10,7 +10,7 @@ import kotlin.math.log2
 
 class Encoder(private val model: Parser.Model) {
 
-    data class Test(val type: String, val progress_i: String = "", val eLocation: Int = -1)
+    data class Test(val type: String, val location: Int, val processList: String, val operator: String)
     data class Transition(val guard: String, val assignments: List<String>)
     data class Link(
         val oldLocation: String,
@@ -33,7 +33,7 @@ class Encoder(private val model: Parser.Model) {
     //=================================================================================================================
 
     //by Definition 7
-    private fun Int.encLocation(timestamp: String = "i", pId: Int, digit: Int): String {
+    private fun Int.encLocation(timestamp: String = "i", pId: Int, digit: Int, copy: Boolean = false): String {
         var output = ""
         var binaryId = this.toBinaryString()
         while(binaryId.length < digit) {
@@ -45,6 +45,14 @@ class Encoder(private val model: Parser.Model) {
                 "$atom & "
             } else {
                 "~$atom & "
+            }
+            if (copy) {
+                val atomC = "n_${timestamp}_${pId}_${d}_c"
+                output +=  if(c == '1') {
+                    "$atomC & "
+                } else {
+                    "~$atomC & "
+                }
             }
         }
         return "(${output.dropLast(3)})"
@@ -59,13 +67,13 @@ class Encoder(private val model: Parser.Model) {
     }
 
     //by Definition 8
-    private fun String.encSetTrue(timestamp: String = "I"): String {
-        return "(~${this}_${timestamp}_u & ${this}_${timestamp}_t)"
+    private fun String.encSetTrue(timestamp: String = "I", copy: Boolean = false): String {
+        return "(~${this}_${timestamp}_u & ${this}_${timestamp}_t)${if (copy) {" & (~${this}_${timestamp}_u_c & ${this}_${timestamp}_t_c)"} else ""}"
     }
 
     //by Definition 8
-    private fun String.encSetFalse(timestamp: String = "I"): String {
-        return "(~${this}_${timestamp}_u & ~${this}_${timestamp}_t)"
+    private fun String.encSetFalse(timestamp: String = "I", copy: Boolean = false): String {
+        return "(~${this}_${timestamp}_u & ~${this}_${timestamp}_t)${if (copy) {" & (~${this}_${timestamp}_u_c & ~${this}_${timestamp}_t_c)"} else ""}"
     }
 
     //by Definition 8
@@ -280,15 +288,42 @@ class Encoder(private val model: Parser.Model) {
 
     inner class Evaluator(private val test: Test) {
 
-        private fun Formula.modifiedWith(wString: String): Formula {
-            //now only works to modify locations of correctness
-            val w = p.parse(wString)
-            val disjointOver = mutableListOf(w)
-            val conjunctOver = mutableListOf<Formula>()
-            conjunctOver.add( ff.or(this, w.negate()))
-            disjointOver.add( this.negate() )
-            conjunctOver.add( ff.or(disjointOver) )
-            return ff.and(conjunctOver)
+        private val predicates = mutableListOf<String>()
+        private val processesToCheck = mutableListOf<Int>()
+        init {
+            processesToCheck += (test.processList).extractCSList()
+            if(test.type == "liveness") {
+                derivePredicates()
+            }
+        }
+        //helper function
+        private fun derivePredicates() {
+            for(p in model.predicates) {
+                predicates.add("${p.value}_i_u")
+                predicates.add("${p.value}_i_t")
+            }
+            for((pId, process) in model.processes.withIndex()) {
+                for(d in 0 until digitRequired(numberOfLocations(process))) {
+                    predicates.add("n_i_${pId}_${d}")
+                }
+            }
+        }
+        //helper function
+        private fun String.extractCSList(): MutableList<Int> {
+            var listTrimmed = this.dropLastWhile {it == ')'}.dropWhile { it == '(' }
+            val list = mutableListOf<Int>()
+            if(listTrimmed.decapitalize() == "all" || listTrimmed.decapitalize() == "a") {
+                for (pId in model.processes.indices) {
+                    list.add(pId)
+                }
+            } else {
+                while(listTrimmed.contains(',')) {
+                    list.add(listTrimmed.substringBefore(',').trim().toInt())
+                    listTrimmed = listTrimmed.substringAfter(',').trim()
+                }
+                list.add(listTrimmed.toInt())
+            }
+            return list
         }
 
         //formula creation function
@@ -298,6 +333,20 @@ class Encoder(private val model: Parser.Model) {
                 bigOr.add(link toFormulaWithTimestamp t)
             }
             return ff.or(bigOr)
+        }
+
+        private fun Formula.modifiedWith(wString: String): Formula {
+            //now only works to modify locations of correctness
+            println()
+            println(this)
+            println()
+            val w = p.parse(wString)
+            val disjointOver = mutableListOf(w)
+            val conjunctOver = mutableListOf<Formula>()
+            conjunctOver.add( ff.or(this, w.negate()))
+            disjointOver.add( this.negate() )
+            conjunctOver.add( ff.or(disjointOver) )
+            return ff.and(conjunctOver)
         }
 
         //modifies formula so as to be removable from SAT memory by adding a "removal formula"
@@ -324,7 +373,7 @@ class Encoder(private val model: Parser.Model) {
                 idleFormula.add(p.parse(it insertTimestamp t))
             }
             if(test.type == "liveness") {
-                this.encStateRecord(test).forEach {
+                encStateRecord().forEach {
                     stateRecord.add(p.parse(it insertTimestamp t))
                 }
             }
@@ -338,36 +387,26 @@ class Encoder(private val model: Parser.Model) {
         }
         //helper functions
         //by definition ?
-        private fun Link.encStateRecord(test: Test): List<String> {
+        private fun encStateRecord(): List<String> {
             val bigAnd = mutableListOf<String>()
-            val iIndexedVariables = mutableListOf<String>()
-            iIndexedVariables += this.oldLocation.extractVariablesToList()
-            iIndexedVariables += this.newLocation.extractVariablesToList()
-            iIndexedVariables += this.transition.guard.extractVariablesToList()
-            this.transition.assignments.forEach { iIndexedVariables += it.extractVariablesToList() }
-            this.idle.forEach { iIndexedVariables += it.extractVariablesToList() }
-            bigAnd.add("(rd_I <-> (re_i | rd_i))")
-            iIndexedVariables.distinct().forEach {
+            bigAnd.add("(rd_I <=> (re_i | rd_i))")
+            predicates.distinct().forEach {
                 bigAnd.add(
-                    "(${it.replace("i", "I")}_c <-> ((re_i & ~rd_i) -> $it) & (~(re_i & ~rd_i) -> ${it}_c)))"
+                    "(${it.replace("i", "I")}_c <=> (((re_i & ~rd_i) => $it) & (~(re_i & ~rd_i) => ${it}_c)))"
                 )
             }
-            bigAnd.add("(live_I <-> (live_i | ((re_i | rd_i) & ${test.progress_i})))")
+            bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${encProgress(processesToCheck)})))")
             return bigAnd
         }
-        //extracts variables that are i indexed from any string, ignoring operands and constants
-        private fun String.extractVariablesToList(indexCondition: String = "i"): MutableList<String> {
-            var varStr = this.replace("unknown", "").replace("${"$"}true", "").replace("${"$"}false", "")
-            val variables = mutableListOf<String>()
-            while(varStr.isNotEmpty()) {
-                varStr = varStr.dropWhile { it == '(' || it == ')' || it == '-' || it == '>' || it == '<' || it == '&' || it == '|' || it == '~' }
-                val variable = varStr.substringBefore(' ')
-                if(variable.contains(indexCondition)) {
-                    variables.add(variable)
-                }
-                varStr = varStr.substringAfter(' ')
+        //helper function
+        private fun encProgress(toCheck: MutableList<Int>): String {
+            var progress = ""
+            for(pId in toCheck) {
+                val process = model.processes[pId]
+                progress += test.location.encLocation(pId = pId, digit = digitRequired(numberOfLocations(process)))
+                progress += " ${test.operator} "
             }
-            return variables
+            return progress.dropLast(3)
         }
 
         //by Definition 11/12?
@@ -375,29 +414,41 @@ class Encoder(private val model: Parser.Model) {
             val conjunctOver = mutableListOf<Formula>()
             for((pId, process) in model.processes.withIndex()) {
                 val digit = digitRequired(numberOfLocations(process))
-                conjunctOver.add(p.parse(0.encLocation( "0", pId, digit)))
+                conjunctOver.add(p.parse(0.encLocation( "0", pId, digit, copy = (test.type == "liveness"))))
             }
             for(predicate in model.predicates) {
                 val initAs: Boolean ?= model.init[predicate.key]
                 conjunctOver.add(
                     if(initAs != null && !initAs) {
-                        p.parse(("${predicate.value}").encSetFalse("0"))
+                        p.parse(("${predicate.value}").encSetFalse("0", copy = (test.type == "liveness")))
                     } else {
-                        p.parse(("${predicate.value}").encSetTrue("0"))
+                        p.parse(("${predicate.value}").encSetTrue("0", copy = (test.type == "liveness")))
                     }
                 )
+            }
+            if(test.type == "liveness") {
+                conjunctOver.add(p.parse("~rd_0 & ~lv_0"))
             }
             return ff.and(conjunctOver)
         }
 
         //by Definition 11/12?
         private fun errorLocation(e: Int, bound: Int = 10): Formula {
-            val conjunctOver = mutableListOf<Formula>()
-            for((pId, process) in model.processes.withIndex()) {
+            val toJoin = mutableListOf<Formula>()
+            for(pId in processesToCheck) {
+                val process = model.processes[pId]
                 val digit = digitRequired(numberOfLocations(process))
-                conjunctOver.add(p.parse(e.encLocation(bound.toString(), pId, digit)))
+                toJoin.add(p.parse(e.encLocation(bound.toString(), pId, digit)))
             }
-            return ff.and(conjunctOver)
+            return if(test.operator == "|") ff.or(toJoin) else ff.and(toJoin)
+        }
+
+        private fun livenessProperty(t: Int): Formula {
+            val bigAnd = mutableListOf<Formula>()
+            bigAnd.add(p.parse("rd_$t"))
+            predicates.forEach { bigAnd.add(p.parse("(${it.insertTimestamp(t)} <=> ${it.insertTimestamp(t)}_c)")) }
+            bigAnd.add(p.parse("~lv_$t"))
+            return ff.and(bigAnd)
         }
 
         fun evaluate (bound: Int): Boolean {
@@ -408,11 +459,12 @@ class Encoder(private val model: Parser.Model) {
             var formula = init()
             for(t in 0 until bound + 1) {
                 val w = "w_${t}"
-                val error = errorLocation(test.eLocation, t)
-                val correct = error.negate().cnf()
+                val property = if (test.type == "liveness") livenessProperty(t) else errorLocation(test.location, t)
+                val correct = property.negate().cnf()
 
                 print(" k(a)=$t")
                 val unitStartTimeA = System.nanoTime()
+                println(property)
                 solver.add(formula)
                 solver.add(correct.modifiedWith(w))
                 stepResults.add(

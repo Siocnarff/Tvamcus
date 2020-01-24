@@ -2,10 +2,7 @@ package za.ac.up
 
 import za.ac.up.extensions.Encoder
 import za.ac.up.extensions.Parser
-import java.io.FileWriter
 import java.text.ParseException
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 //Note: jar build in Tvamcus/build/libs
 //In windows run jar with "java -d64 -Xms50m -Xmx10g -jar Tvamcus-1.0.jar" for better performance
@@ -64,10 +61,22 @@ object CLI {
         val type = readLine()
         if(type?.decapitalize() == "l" || type?.decapitalize() ==  "liveness") {
             do {
-                print("Progress Formula: ")
-                val progress = readLine()
-                if(progress != null) {
-                    return Encoder.Test("liveness", progress_i = progress)
+                print("Progress Location: ")
+                val pLoc = readLine()
+                if(pLoc != null && pLoc.toInt() >= 0) {
+                    print("Processes to Consider - as list (i.e. 0,7,3,2) or type 'a/A' for all: ")
+                    val processList = readLine()
+                    if(processList != null) {
+                        print("Operator (&/|): ")
+                        val operator = readLine()
+                        if(operator != null && (operator == "|" || operator == "&")) {
+                            return Encoder.Test("liveness", pLoc.toInt(), processList, operator)
+                        } else {
+                            println("Please try again, note '|' -> 'or' but '&' -> 'and'. Please type out the symbols themselves.")
+                        }
+                    } else {
+                        print("Please try again - ")
+                    }
                 } else {
                     println("Formula must be sound and in unparsed string format.")
                     print("Please try again - ")
@@ -77,8 +86,20 @@ object CLI {
             do {
                 print("Error Location: ")
                 val eLoc = readLine()
-                if(eLoc != null && eLoc.toInt() > 0) {
-                    return Encoder.Test("reachability", eLocation = eLoc.toInt())
+                if(eLoc != null && eLoc.toInt() >= 0) {
+                    print("Processes to Consider - as list (i.e. 0,7,3,2) or type 'a/A' for all: ")
+                    val processList = readLine()
+                    if(processList != null) {
+                        print("Operator (&/|): ")
+                        val operator = readLine()
+                        if (operator != null && (operator == "|" || operator == "&")) {
+                            return Encoder.Test("reachability", eLoc.toInt(), processList, operator)
+                        } else {
+                            println("Please try again, note:\n'|' -> 'or' but '&' -> 'and'. Please type out the symbols themselves.")
+                        }
+                    } else {
+                        print("Please try again - ")
+                    }
                 } else {
                     println("Error Location has to be a non-negative integer.")
                     print("Please try again - ")
