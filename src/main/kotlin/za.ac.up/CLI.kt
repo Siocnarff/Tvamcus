@@ -7,6 +7,10 @@ import java.text.ParseException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+//Note: jar build in Tvamcus/build/libs
+//In windows run jar with "java -d64 -Xms50m -Xmx10g -jar Tvamcus-1.0.jar" for better performance
+//however this is not fully optimized, and further JVM settings can be tested to attempt improvment
+
 object CLI {
     @JvmStatic
     fun main(args: Array<String>) {
