@@ -4,7 +4,6 @@ import org.logicng.datastructures.Tristate
 import org.logicng.formulas.Formula
 import org.logicng.formulas.FormulaFactory
 import org.logicng.formulas.Literal
-import org.logicng.functions.LiteralProfileFunction
 import org.logicng.io.parsers.PropositionalParser
 import org.logicng.solvers.MiniSat
 import java.util.*
@@ -547,22 +546,20 @@ class Encoder(private val model: Parser.Model) {
             val performanceLog = mutableListOf<Long>()
             val stepResults = mutableListOf<Tristate>()
             val startTime = System.nanoTime()
-
             var formula = init()
             for (t in 0 until bound) {
                 val property = if (test.type == "liveness") livenessProperty(t) else errorLocation(test.location, t)
-
                 print(" k(a)=$t")
-                solver.reset()
                 val unitStartTimeA = System.nanoTime()
+                solver.reset()
                 solver.add(ff.and(formula, property, p.parse("unknown")))
                 stepResults.add(solver.sat())
                 performanceLog.add(System.nanoTime() - unitStartTimeA)
                 printStepStat(performanceLog.last(), stepResults.last().toString())
                 if (stepResults.last() == Tristate.TRUE) {
                     print(" k(b)=$t")
-                    solver.reset()
                     val unitStartTimeB = System.nanoTime()
+                    solver.reset()
                     solver.add(ff.and(formula, property, p.parse("~unknown")))
                     stepResults.add(solver.sat())
                     performanceLog.add(System.nanoTime() - unitStartTimeB)

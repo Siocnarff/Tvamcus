@@ -67,8 +67,12 @@ object CLI {
                     print("Processes to Consider - as list (i.e. 0,7,3,2) or type 'A' for all: ")
                     val processList = readLine()
                     if(processList != null) {
-                        print("Operator (&/|): ")
-                        val operator = readLine()
+                        val operator = if(processList.contains(',') || processList.decapitalize().contains('a')) {
+                            print("Operator (&/|): ")
+                            readLine()
+                        } else {
+                            "&" // since only only one process in list, any operator will do, so user does not need to select one
+                        }
                         if(operator != null && (operator == "|" || operator == "&")) {
                             return Encoder.Test("liveness", pLoc.toInt(), processList, operator)
                         } else {
