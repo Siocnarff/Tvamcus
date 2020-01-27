@@ -64,7 +64,7 @@ object CLI {
                 print("Progress Location: ")
                 val pLoc = readLine()
                 if(pLoc != null && pLoc.toInt() >= 0) {
-                    print("Processes to Consider - as list (i.e. 0,7,3,2) or type 'a/A' for all: ")
+                    print("Processes to Consider - as list (i.e. 0,7,3,2) or type 'A' for all: ")
                     val processList = readLine()
                     if(processList != null) {
                         print("Operator (&/|): ")
@@ -87,7 +87,7 @@ object CLI {
                 print("Error Location: ")
                 val eLoc = readLine()
                 if(eLoc != null && eLoc.toInt() >= 0) {
-                    print("Processes to Consider - as list (i.e. 0,7,3,2) or type 'a/A' for all: ")
+                    print("Processes to Consider - as list (i.e. 0,7,3,2) or type 'A' for all: ")
                     val processList = readLine()
                     if(processList != null) {
                         print("Operator (&/|): ")

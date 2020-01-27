@@ -3,8 +3,11 @@ package za.ac.up.extensions
 import org.logicng.datastructures.Tristate
 import org.logicng.formulas.Formula
 import org.logicng.formulas.FormulaFactory
+import org.logicng.formulas.Literal
+import org.logicng.functions.LiteralProfileFunction
 import org.logicng.io.parsers.PropositionalParser
 import org.logicng.solvers.MiniSat
+import java.util.*
 import kotlin.math.ceil
 import kotlin.math.log2
 
@@ -177,7 +180,7 @@ class Encoder(private val model: Parser.Model) {
         val conjunctOver = mutableListOf<String>()
         for((pId, p) in model.processes.withIndex()) {
             if(activeProcessId != pId) {
-                val tally = numberOfLocations(p)
+                val tally = p.numberOfLocations()
                 for(locationId in 0..tally) {
                     for(d in 0..digitRequired(tally)) {
                         conjunctOver.add("(n_i_${pId}_${d} <=> n_I_${pId}_${d})")
@@ -189,9 +192,9 @@ class Encoder(private val model: Parser.Model) {
     }
     //helper function
     //counts locations in json model
-    private fun numberOfLocations(process: Parser.Process): Int {
+    private fun Parser.Process.numberOfLocations(): Int {
         var tally = 0
-        for (transition in process.transitions) {
+        for (transition in this.transitions) {
             if (transition.source > tally) {
                 tally = transition.source
             } else if (transition.destination > tally) {
@@ -268,7 +271,7 @@ class Encoder(private val model: Parser.Model) {
     private fun encodeModel() {
         for((pId, process) in model.processes.withIndex()) {
             for (t in process.transitions) {
-                val digit = digitRequired(numberOfLocations(process))
+                val digit = digitRequired(process.numberOfLocations())
                 formulaTemplate.add(
                     Link(
                         (t.source).encLocation("i", pId, digit),
@@ -305,7 +308,7 @@ class Encoder(private val model: Parser.Model) {
                 predicates.add("${p.value}_i_t")
             }
             for ((pId, process) in model.processes.withIndex()) {
-                for (d in 0 until digitRequired(numberOfLocations(process))) {
+                for (d in 0 until digitRequired(process.numberOfLocations())) {
                     predicates.add("n_i_${pId}_${d}")
                 }
             }
@@ -409,7 +412,7 @@ class Encoder(private val model: Parser.Model) {
             var progress = ""
             for (pId in toCheck) {
                 val process = model.processes[pId]
-                progress += test.location.encLocation(pId = pId, digit = digitRequired(numberOfLocations(process)))
+                progress += test.location.encLocation(pId = pId, digit = digitRequired(process.numberOfLocations()))
                 progress += " ${test.operator} "
             }
             return progress.dropLast(3)
@@ -419,7 +422,7 @@ class Encoder(private val model: Parser.Model) {
         private fun init(): Formula {
             val conjunctOver = mutableListOf<Formula>()
             for ((pId, process) in model.processes.withIndex()) {
-                val digit = digitRequired(numberOfLocations(process))
+                val digit = digitRequired(process.numberOfLocations())
                 conjunctOver.add(p.parse(0.encLocation("0", pId, digit, copy = (test.type == "liveness"))))
             }
             for (predicate in model.predicates) {
@@ -443,7 +446,7 @@ class Encoder(private val model: Parser.Model) {
             val toJoin = mutableListOf<Formula>()
             for (pId in processesToCheck) {
                 val process = model.processes[pId]
-                val digit = digitRequired(numberOfLocations(process))
+                val digit = digitRequired(process.numberOfLocations())
                 toJoin.add(p.parse(e.encLocation(bound.toString(), pId, digit)))
             }
             return if (test.operator == "|") ff.or(toJoin) else ff.and(toJoin)
@@ -455,6 +458,44 @@ class Encoder(private val model: Parser.Model) {
             predicates.forEach { bigAnd.add(p.parse("(${it.insertTimestamp(t)} <=> ${it.insertTimestamp(t)}_c)")) }
             bigAnd.add(p.parse("~lv_$t"))
             return ff.and(bigAnd)
+        }
+
+        private fun SortedSet<Literal>.predicateStatus(timestamp: Int): MutableList<String> {
+            val predicateStatuses = mutableListOf<String>()
+            for(p in model.predicates) {
+                if(this.contains(ff.literal("${p.value}_${timestamp}_u", true))) {
+                    predicateStatuses.add("${p.key} = unknown")
+                } else if (this.contains(ff.literal("${p.value}_${timestamp}_t", true))) {
+                    predicateStatuses.add("${p.key} = true")
+                } else {
+                    predicateStatuses.add("${p.key} = false")
+                }
+            }
+            return predicateStatuses
+        }
+
+        private fun SortedSet<Literal>.locationStatus(timestamp: Int): MutableList<String> {
+            val processLocations = mutableListOf<String>()
+            for ((pId, process) in model.processes.withIndex()) {
+                var processLocation = ""
+                for(d in 0 until digitRequired(process.numberOfLocations())) {
+                    processLocation += if(this.contains(ff.literal("n_${timestamp}_${pId}_${d}", false))) {
+                        "0"
+                    } else {
+                        "1"
+                    }
+                }
+                processLocations.add(processLocation)
+            }
+            return processLocations
+        }
+
+        private fun SortedSet<Literal>.printSolutionPath(bound: Int) {
+            for(k in 0 until bound) {
+                println("\n$k:")
+                println(this.locationStatus(k))
+                println(this.predicateStatus(k))
+            }
         }
 
         fun evaluate(bound: Int): Boolean {
@@ -512,30 +553,30 @@ class Encoder(private val model: Parser.Model) {
                 val property = if (test.type == "liveness") livenessProperty(t) else errorLocation(test.location, t)
 
                 print(" k(a)=$t")
+                solver.reset()
                 val unitStartTimeA = System.nanoTime()
                 solver.add(ff.and(formula, property, p.parse("unknown")))
                 stepResults.add(solver.sat())
-                solver.reset()
                 performanceLog.add(System.nanoTime() - unitStartTimeA)
                 printStepStat(performanceLog.last(), stepResults.last().toString())
                 if (stepResults.last() == Tristate.TRUE) {
                     print(" k(b)=$t")
+                    solver.reset()
                     val unitStartTimeB = System.nanoTime()
                     solver.add(ff.and(formula, property, p.parse("~unknown")))
                     stepResults.add(solver.sat())
-                    solver.reset()
                     performanceLog.add(System.nanoTime() - unitStartTimeB)
                     printStepStat(performanceLog.last(), stepResults.last().toString())
                     if (stepResults.last() == Tristate.TRUE) {
                         printSatisfiable(startT = startTime, endT = System.nanoTime(), timestamp = t)
-                        println(stepResults)
+                        println("\nSolution Path")
+                        solver.model().literals().printSolutionPath(t)
                         return
                     }
                 }
                 formula = ff.and(formula, formulaForTimestamp(t))
             }
             printNoErrorFound(startTime, System.nanoTime(), bound)
-            println(stepResults)
         }
     }
 }
