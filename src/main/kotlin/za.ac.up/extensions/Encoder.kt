@@ -489,7 +489,7 @@ class Encoder(private val model: Parser.Model) {
             return processLocations
         }
 
-        private fun SortedSet<Literal>.printSolutionPath(bound: Int) {
+        private fun SortedSet<Literal>.printErrorPath(bound: Int) {
             for(k in 0 until bound + 1) {
                 println("\n$k:")
                 println(this.locationStatus(k))
@@ -566,8 +566,8 @@ class Encoder(private val model: Parser.Model) {
                     printStepStat(performanceLog.last(), stepResults.last().toString())
                     if (stepResults.last() == Tristate.TRUE) {
                         printSatisfiable(startT = startTime, endT = System.nanoTime(), timestamp = t)
-                        println("\nSolution Path")
-                        solver.model().literals().printSolutionPath(t)
+                        println("\nError Path")
+                        solver.model().literals().printErrorPath(t)
                         return
                     }
                 }
