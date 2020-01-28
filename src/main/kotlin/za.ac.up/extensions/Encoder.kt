@@ -490,7 +490,7 @@ class Encoder(private val model: Parser.Model) {
         }
 
         private fun SortedSet<Literal>.printSolutionPath(bound: Int) {
-            for(k in 0 until bound) {
+            for(k in 0 until bound + 1) {
                 println("\n$k:")
                 println(this.locationStatus(k))
                 println(this.predicateStatus(k))
@@ -547,7 +547,7 @@ class Encoder(private val model: Parser.Model) {
             val stepResults = mutableListOf<Tristate>()
             val startTime = System.nanoTime()
             var formula = init()
-            for (t in 0 until bound) {
+            for (t in 0 until bound + 1) {
                 val property = if (test.type == "liveness") livenessProperty(t) else errorLocation(test.location, t)
                 print(" k(a)=$t")
                 val unitStartTimeA = System.nanoTime()
