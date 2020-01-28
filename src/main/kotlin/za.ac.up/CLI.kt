@@ -57,35 +57,42 @@ object CLI {
     }
 
     private fun getTest(): Encoder.Test {
-        print("\nLiveness or Reachability? (L/R): ")
+        print("\nLiveness or Reachability? (l/r): ")
         val type = readLine()
         if(type?.decapitalize() == "l" || type?.decapitalize() ==  "liveness") {
             do {
-                print("Progress Location: ")
-                val pLoc = readLine()
-                if(pLoc != null && pLoc.toInt() >= 0) {
-                    print("Processes to Consider - as list (i.e. 0,7,3,2) or type 'A' for all: ")
-                    val processList = readLine()
-                    if(processList != null) {
-                        val operator = if(processList.contains(',') || processList.decapitalize().contains('a')) {
-                            print("Operator (&/|): ")
-                            readLine()
+                print("With Fairness? (y/n): ")
+                val answer = readLine()
+                if(answer != null) {
+                    val fairnessOn = (answer.decapitalize() == "y")
+                    do {
+                        print("Progress Location: ")
+                        val pLoc = readLine()
+                        if(pLoc != null && pLoc.toInt() >= 0) {
+                            print("Processes to Consider - as list (i.e. 0,7,3,2) or type 'a' for all: ")
+                            val processList = readLine()
+                            if(processList != null) {
+                                val operator = if(processList.contains(',') || processList.decapitalize().contains('a')) {
+                                    print("Operator (&/|): ")
+                                    readLine()
+                                } else {
+                                    "&" // since only only one process in list, any operator will do, so user does not need to select one
+                                }
+                                if(operator != null && (operator == "|" || operator == "&")) {
+                                    return Encoder.Test("liveness", pLoc.toInt(), processList, operator, fairnessOn)
+                                } else {
+                                    println("Please try again, note '|' -> 'or' but '&' -> 'and'. Please type out the symbols themselves.")
+                                }
+                            } else {
+                                print("Please try again - ")
+                            }
                         } else {
-                            "&" // since only only one process in list, any operator will do, so user does not need to select one
+                            println("Formula must be sound and in unparsed string format.")
+                            print("Please try again - ")
                         }
-                        if(operator != null && (operator == "|" || operator == "&")) {
-                            return Encoder.Test("liveness", pLoc.toInt(), processList, operator)
-                        } else {
-                            println("Please try again, note '|' -> 'or' but '&' -> 'and'. Please type out the symbols themselves.")
-                        }
-                    } else {
-                        print("Please try again - ")
-                    }
-                } else {
-                    println("Formula must be sound and in unparsed string format.")
-                    print("Please try again - ")
+                    } while(true)
                 }
-            } while(true)
+            } while (true)
         } else {
             do {
                 print("Error Location: ")

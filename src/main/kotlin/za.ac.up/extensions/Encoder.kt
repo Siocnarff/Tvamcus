@@ -12,19 +12,22 @@ import kotlin.math.log2
 
 class Encoder(private val model: Parser.Model) {
 
-    data class Test(val type: String, val location: Int, val processList: String, val operator: String)
+    data class Test(val type: String, val location: Int, val processList: String, val operator: String, val fairnessON: Boolean = false)
     data class Transition(val guard: String, val assignments: List<String>)
     data class Link(
+        val parentProcess: Int,
         val oldLocation: String,
         val transition: Transition,
         val newLocation: String,
         val idle: List<String>
     )
-    data class EncodedProcess(
-        val id: Int,
-        val links: MutableList<Link> = mutableListOf()
+    private val encodedModel: MutableList<Link> = mutableListOf()
+    private data class StepStat(
+        val locationStatus: MutableList<String>,
+        val predicateStatus: MutableList<String>,
+        val fairnessStatus: MutableList<String>,
+        val reRdStatus: Pair<String, String>
     )
-    private val encodedModel: MutableList<EncodedProcess> = mutableListOf()
     companion object {
         private val ff = FormulaFactory()
         private val p = PropositionalParser(ff)
@@ -39,7 +42,7 @@ class Encoder(private val model: Parser.Model) {
     //=================================================================================================================
 
     //by Definition 7
-    private fun Int.encLocation(timestamp: String = "i", pId: Int, digit: Int, copy: Boolean = false): String {
+    private fun Int.encLocation(timestamp: String = "i", pId: Int, digit: Int): String {
         var output = ""
         var binaryId = this.toBinaryString()
         while(binaryId.length < digit) {
@@ -52,13 +55,22 @@ class Encoder(private val model: Parser.Model) {
             } else {
                 "~$atom & "
             }
-            if (copy) {
-                val atomC = "n_${timestamp}_${pId}_${d}_c"
-                output +=  if(c == '1') {
-                    "$atomC & "
-                } else {
-                    "~$atomC & "
-                }
+        }
+        return "(${output.dropLast(3)})"
+    }
+    //by an extension of Definition 7
+    private fun Int.encLocationCopy(timestamp: String = "i", pId: Int, digit: Int): String {
+        var output = ""
+        var binaryId = this.toBinaryString()
+        while(binaryId.length < digit) {
+            binaryId = "0$binaryId"
+        }
+        for((d, c) in binaryId.withIndex()) {
+            val atomC = "n_${timestamp}_${pId}_${d}_c"
+            output +=  if(c == '1') {
+                "$atomC & "
+            } else {
+                "~$atomC & "
             }
         }
         return "(${output.dropLast(3)})"
@@ -73,13 +85,21 @@ class Encoder(private val model: Parser.Model) {
     }
 
     //by Definition 8
-    private fun String.encSetTrue(timestamp: String = "I", copy: Boolean = false): String {
-        return "(~${this}_${timestamp}_u & ${this}_${timestamp}_t)${if (copy) {" & (~${this}_${timestamp}_u_c & ${this}_${timestamp}_t_c)"} else ""}"
+    private fun String.encSetTrue(timestamp: String = "I"): String {
+        return "(~${this}_${timestamp}_u & ${this}_${timestamp}_t)"
+    }
+    //by an extension of Definition 8
+    private fun String.encSetTrueCopy(timestamp: String = "I"): String {
+        return "(~${this}_${timestamp}_u_c & ${this}_${timestamp}_t_c)"
     }
 
     //by Definition 8
-    private fun String.encSetFalse(timestamp: String = "I", copy: Boolean = false): String {
-        return "(~${this}_${timestamp}_u & ~${this}_${timestamp}_t)${if (copy) {" & (~${this}_${timestamp}_u_c & ~${this}_${timestamp}_t_c)"} else ""}"
+    private fun String.encSetFalse(timestamp: String = "I"): String {
+        return "(~${this}_${timestamp}_u & ~${this}_${timestamp}_t)"
+    }
+    //by an extension of Definition 8
+    private fun String.encSetFalseCopy(timestamp: String = "I"): String {
+        return "(~${this}_${timestamp}_u_c & ~${this}_${timestamp}_t_c)"
     }
 
     //by Definition 8
@@ -273,11 +293,11 @@ class Encoder(private val model: Parser.Model) {
     //this function creates our encoded formulaTemplate
     private fun encodeModel() {
         for((pId, process) in model.processes.withIndex()) {
-            encodedModel.add(EncodedProcess(pId))
             for (t in process.transitions) {
                 val digit = digitRequired(process.numberOfLocations())
-                encodedModel.last().links.add(
+                encodedModel.add(
                     Link(
+                        pId,
                         (t.source).encLocation("i", pId, digit),
                         encTransition(t),
                         (t.destination).encLocation("I", pId, digit),
@@ -341,15 +361,13 @@ class Encoder(private val model: Parser.Model) {
         //formula creation function
         private fun formulaForTimestamp(t: Int): Formula {
             val bigOr = mutableListOf<Formula>()
-            for (encodedProcess in encodedModel) {
-                for(link in encodedProcess.links) {
-                    bigOr.add(link toFormulaWithTimestamp t)
-                }
+            for (link in encodedModel) {
+                bigOr.add(link toFormulaWithTimestamp t)
             }
             return ff.or(bigOr)
         }
 
-        private fun Formula.modifiedWith(wString: String): Formula {
+        /*private fun Formula.modifiedWith(wString: String): Formula {
             //now only works to modify locations of correctness
             println()
             println(this)
@@ -361,7 +379,7 @@ class Encoder(private val model: Parser.Model) {
             disjointOver.add(this.negate())
             conjunctOver.add(ff.or(disjointOver))
             return ff.and(conjunctOver)
-        }
+        }*/
 
         //modifies formula so as to be removable from SAT memory by adding a "removal formula"
         private infix fun Transition.toFormulaWithTimestamp(timestamp: Int): Formula {
@@ -383,25 +401,31 @@ class Encoder(private val model: Parser.Model) {
         //makes formula from formulaTemplate, using input timestamp as lower bound
         private infix fun Link.toFormulaWithTimestamp(t: Int): Formula {
             val idleFormula = mutableListOf<Formula>()
-            val stateRecord = mutableListOf<Formula>()
             idle.forEach {
                 idleFormula.add(p.parse(it insertTimestamp t))
-            }
-            if (test.type == "liveness") {
-                encStateRecord().forEach {
-                    stateRecord.add(p.parse(it insertTimestamp t))
-                }
             }
             return ff.and(
                 p.parse(oldLocation insertTimestamp t),
                 transition toFormulaWithTimestamp t,
                 p.parse(newLocation insertTimestamp t),
                 ff.and(idleFormula),
-                ff.and(stateRecord)
+                if (test.type == "liveness") this.parentProcess.livenessEvaluationFormula(t) else null
             )
         }
-
         //helper functions
+        private fun Int.livenessEvaluationFormula(t: Int): Formula {
+            val bigAnd = mutableListOf<Formula>()
+            encStateRecord().forEach {
+                bigAnd.add(p.parse(it insertTimestamp t))
+            }
+            if (test.fairnessON) {
+                bigAnd.add(p.parse("(fr_I_${this} <=> (re_i | rd_i))" insertTimestamp t))
+                for(pId in model.processes.indices.filterNot{ it == this }) {
+                    bigAnd.add(p.parse("(fr_${t + 1}_${pId} <=> fr_${t}_${pId})"))
+                }
+            }
+            return ff.and(bigAnd)
+        }
         //by definition ?
         private fun encStateRecord(): List<String> {
             val bigAnd = mutableListOf<String>()
@@ -431,20 +455,33 @@ class Encoder(private val model: Parser.Model) {
             val conjunctOver = mutableListOf<Formula>()
             for ((pId, process) in model.processes.withIndex()) {
                 val digit = digitRequired(process.numberOfLocations())
-                conjunctOver.add(p.parse(0.encLocation("0", pId, digit, copy = (test.type == "liveness"))))
+                conjunctOver.add(p.parse(0.encLocation("0", pId, digit)))
+                if (test.type == "liveness") {
+                    conjunctOver.add(p.parse("~rd_0 & ~lv_0"))
+                    conjunctOver.add(p.parse(0.encLocationCopy("0", pId, digit)))
+                    if(test.fairnessON) {
+                        conjunctOver.add(p.parse("~fr_0_${pId}"))
+                    }
+                }
             }
             for (predicate in model.predicates) {
                 val initAs: Boolean? = model.init[predicate.key]
                 conjunctOver.add(
                     if (initAs != null && !initAs) {
-                        p.parse(("${predicate.value}").encSetFalse("0", copy = (test.type == "liveness")))
+                        p.parse(("${predicate.value}").encSetFalse("0"))
                     } else {
-                        p.parse(("${predicate.value}").encSetTrue("0", copy = (test.type == "liveness")))
+                        p.parse(("${predicate.value}").encSetTrue("0"))
                     }
                 )
-            }
-            if (test.type == "liveness") {
-                conjunctOver.add(p.parse("~rd_0 & ~lv_0"))
+                if(test.type == "liveness") {
+                    conjunctOver.add(
+                        if (initAs != null && !initAs) {
+                            p.parse(("${predicate.value}").encSetFalseCopy("0"))
+                        } else {
+                            p.parse(("${predicate.value}").encSetTrueCopy("0"))
+                        }
+                    )
+                }
             }
             return ff.and(conjunctOver)
         }
@@ -465,15 +502,27 @@ class Encoder(private val model: Parser.Model) {
             bigAnd.add(p.parse("rd_$t"))
             predicates.forEach { bigAnd.add(p.parse("(${it.insertTimestamp(t)} <=> ${it.insertTimestamp(t)}_c)")) }
             bigAnd.add(p.parse("~lv_$t"))
+            if(test.fairnessON) {
+                for(pId in model.processes.indices) {
+                    bigAnd.add(p.parse("fr_${t}_$pId"))
+                }
+            }
             return ff.and(bigAnd)
         }
 
-        private fun SortedSet<Literal>.predicateStatus(timestamp: Int): MutableList<String> {
+        private fun SortedSet<Literal>.reRdStatus(t: Int): Pair<String, String> {
+            return Pair(
+                if (this.contains(ff.literal("re_$t", true))) "re = true" else "re = false",
+                if (this.contains(ff.literal("rd_$t", true))) "rd = true" else "rd = false"
+            )
+        }
+
+        private fun SortedSet<Literal>.predicateStatus(t: Int): MutableList<String> {
             val predicateStatuses = mutableListOf<String>()
             for(p in model.predicates) {
-                if(this.contains(ff.literal("${p.value}_${timestamp}_u", true))) {
+                if(this.contains(ff.literal("${p.value}_${t}_u", true))) {
                     predicateStatuses.add("${p.key} = unknown")
-                } else if (this.contains(ff.literal("${p.value}_${timestamp}_t", true))) {
+                } else if (this.contains(ff.literal("${p.value}_${t}_t", true))) {
                     predicateStatuses.add("${p.key} = true")
                 } else {
                     predicateStatuses.add("${p.key} = false")
@@ -482,12 +531,24 @@ class Encoder(private val model: Parser.Model) {
             return predicateStatuses
         }
 
-        private fun SortedSet<Literal>.locationStatus(timestamp: Int): MutableList<String> {
+        private fun SortedSet<Literal>.fairnessStatus(t: Int): MutableList<String> {
+            val fairnessVariableStatuses = mutableListOf<String>()
+            for(pId in model.processes.indices) {
+                if(this.contains(ff.literal("fr_${t}_${pId}", true))) {
+                    fairnessVariableStatuses.add("P$pId = fair")
+                } else {
+                    fairnessVariableStatuses.add("P$pId = unfair")
+                }
+            }
+            return fairnessVariableStatuses
+        }
+
+        private fun SortedSet<Literal>.locationStatus(t: Int): MutableList<String> {
             val processLocations = mutableListOf<String>()
             for ((pId, process) in model.processes.withIndex()) {
                 var processLocation = ""
                 for(d in 0 until digitRequired(process.numberOfLocations())) {
-                    processLocation += if(this.contains(ff.literal("n_${timestamp}_${pId}_${d}", false))) {
+                    processLocation += if(this.contains(ff.literal("n_${t}_${pId}_${d}", false))) {
                         "0"
                     } else {
                         "1"
@@ -498,15 +559,33 @@ class Encoder(private val model: Parser.Model) {
             return processLocations
         }
 
-        private fun SortedSet<Literal>.printErrorPath(bound: Int) {
+        private fun SortedSet<Literal>.pathInfo(bound: Int): MutableList<StepStat> {
+            val steps = mutableListOf<StepStat>()
             for(k in 0 until bound + 1) {
-                println("\n$k:")
-                println(this.locationStatus(k))
-                println(this.predicateStatus(k))
+                steps.add(
+                    StepStat(
+                        this.locationStatus(k),
+                        this.predicateStatus(k),
+                        this.fairnessStatus(k),
+                        this.reRdStatus(k)
+                    )
+                )
+
+            }
+            return steps
+        }
+
+        private fun MutableList<StepStat>.print() {
+            this.forEachIndexed { index, stepStat ->
+                println("\n$index:")
+                println(stepStat.locationStatus)
+                println(stepStat.predicateStatus)
+                println(stepStat.fairnessStatus)
+                println(stepStat.reRdStatus)
             }
         }
 
-        fun evaluate(bound: Int): Boolean {
+        /*fun evaluate(bound: Int): Boolean {
             val performanceLog = mutableListOf<Long>()
             val stepResults = mutableListOf<Tristate>()
             val startTime = System.nanoTime()
@@ -549,7 +628,7 @@ class Encoder(private val model: Parser.Model) {
             }
             printNoErrorFound(startTime, System.nanoTime(), bound)
             return false
-        }
+        }*/
 
         fun evaluateNoOptimization(bound: Int) {
             val performanceLog = mutableListOf<Long>()
@@ -566,6 +645,7 @@ class Encoder(private val model: Parser.Model) {
                 performanceLog.add(System.nanoTime() - unitStartTimeA)
                 printStepStat(performanceLog.last(), stepResults.last().toString())
                 if (stepResults.last() == Tristate.TRUE) {
+                    val pathInfo = solver.model().literals().pathInfo(t)
                     print(" k(b)=$t")
                     val unitStartTimeB = System.nanoTime()
                     solver.reset()
@@ -574,9 +654,15 @@ class Encoder(private val model: Parser.Model) {
                     performanceLog.add(System.nanoTime() - unitStartTimeB)
                     printStepStat(performanceLog.last(), stepResults.last().toString())
                     if (stepResults.last() == Tristate.TRUE) {
-                        printSatisfiable(startT = startTime, endT = System.nanoTime(), timestamp = t)
+                        val time = System.nanoTime()
                         println("\nError Path")
-                        solver.model().literals().printErrorPath(t)
+                        solver.model().literals().pathInfo(t).print()
+                        printSatisfiable(startT = startTime, endT = time, timestamp = t)
+                        return
+                    } else {
+                        val time = System.nanoTime()
+                        pathInfo.print()
+                        printUnknown(startT = startTime, endT = time, timestamp = t)
                         return
                     }
                 }

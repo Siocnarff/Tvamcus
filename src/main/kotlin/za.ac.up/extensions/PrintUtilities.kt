@@ -5,7 +5,18 @@ fun printSatisfiable(startT: Long, endT: Long, timestamp: Int) {
     println("__________________________________________________________________________________________________")
     println()
     println()
-    println("                               Satisfiable at timestamp: $timestamp")
+    println("                               SATISFIABLE at timestamp: $timestamp")
+    println("                               Time elapsed since start: ${(endT - startT)/1000000000}s  (${(endT - startT) / 1000000}ms)")
+    println()
+    println("__________________________________________________________________________________________________")
+}
+
+fun printUnknown(startT: Long, endT: Long, timestamp: Int) {
+    println()
+    println("__________________________________________________________________________________________________")
+    println()
+    println()
+    println("                               UNKNOWN after timestamp: $timestamp")
     println("                               Time elapsed since start: ${(endT - startT)/1000000000}s  (${(endT - startT) / 1000000}ms)")
     println()
     println("__________________________________________________________________________________________________")
