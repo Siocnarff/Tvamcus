@@ -20,7 +20,11 @@ class Encoder(private val model: Parser.Model) {
         val newLocation: String,
         val idle: List<String>
     )
-    private val formulaTemplate: MutableList<Link> = mutableListOf()
+    data class EncodedProcess(
+        val id: Int,
+        val links: MutableList<Link> = mutableListOf()
+    )
+    private val encodedModel: MutableList<EncodedProcess> = mutableListOf()
     companion object {
         private val ff = FormulaFactory()
         private val p = PropositionalParser(ff)
@@ -269,9 +273,10 @@ class Encoder(private val model: Parser.Model) {
     //this function creates our encoded formulaTemplate
     private fun encodeModel() {
         for((pId, process) in model.processes.withIndex()) {
+            encodedModel.add(EncodedProcess(pId))
             for (t in process.transitions) {
                 val digit = digitRequired(process.numberOfLocations())
-                formulaTemplate.add(
+                encodedModel.last().links.add(
                     Link(
                         (t.source).encLocation("i", pId, digit),
                         encTransition(t),
@@ -280,6 +285,8 @@ class Encoder(private val model: Parser.Model) {
                     )
                 )
             }
+
+
         }
         println("...modelEncoded")
     }
@@ -334,8 +341,10 @@ class Encoder(private val model: Parser.Model) {
         //formula creation function
         private fun formulaForTimestamp(t: Int): Formula {
             val bigOr = mutableListOf<Formula>()
-            for (link in formulaTemplate) {
-                bigOr.add(link toFormulaWithTimestamp t)
+            for (encodedProcess in encodedModel) {
+                for(link in encodedProcess.links) {
+                    bigOr.add(link toFormulaWithTimestamp t)
+                }
             }
             return ff.or(bigOr)
         }
