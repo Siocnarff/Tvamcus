@@ -6,7 +6,7 @@ import java.text.ParseException
 
 //Note: jar build in Tvamcus/build/libs
 //In windows run jar with "java -d64 -Xms50m -Xmx10g -jar Tvamcus-1.0.jar" for better performance
-//however this is not fully optimized, and further JVM settings can be tested to attempt improvment
+//however this is not fully optimized, and further JVM settings can be tested to attempt improvement
 
 object CLI {
     @JvmStatic
@@ -19,8 +19,9 @@ object CLI {
         */
         try {
 
-            val encoder = getEncoder()
-            val test = getTest()
+            val model = getModel()
+            val test = getTestFor(model)
+            val encoder = Encoder(model)
             val ev = encoder.Evaluator(test)
             ev.evaluateNoOptimization(getBound())
 
@@ -31,7 +32,7 @@ object CLI {
         }
     }
 
-    private fun getEncoder(): Encoder {
+    private fun getModel(): Parser.Model {
         do {
             print("Input file name: ")
             val file = readLine()
@@ -41,7 +42,7 @@ object CLI {
                     val model = Parser.parseFile("/C:/Code/Tuks/Development/Tvamcus/inputFiles/$file.json")
                     println("...parsed")
                     try {
-                        return Encoder(model)
+                        return model
                     } catch (e: ParseException) {
                         println("Model cannot be encoded.")
                         println("Please ensure that the json file follows the required specifications.")
@@ -56,7 +57,7 @@ object CLI {
         } while (true)
     }
 
-    private fun getTest(): Encoder.Test {
+    private fun getTestFor(model: Parser.Model): Encoder.Test {
         print("\nLiveness or Reachability? (l/r): ")
         val type = readLine()
         if(type?.decapitalize() == "l" || type?.decapitalize() ==  "liveness") {
@@ -70,9 +71,14 @@ object CLI {
                         val pLoc = readLine()
                         if(pLoc != null && pLoc.toInt() >= 0) {
                             print("Processes to Consider - as list (i.e. 0,7,3,2) or type 'a' for all: ")
-                            val processList = readLine()
-                            if(processList != null) {
-                                val operator = if(processList.contains(',') || processList.decapitalize().contains('a')) {
+                            val processCSList = readLine()
+                            if(processCSList != null) {
+                                val processList = if (processCSList.decapitalize().contains('a')) {
+                                    model.processes.indices.toMutableList()
+                                } else {
+                                    processCSList.extractCSList(model)
+                                }
+                                val operator = if(processList.size != 1) {
                                     print("Operator (&/|): ")
                                     readLine()
                                 } else {
@@ -99,10 +105,19 @@ object CLI {
                 val eLoc = readLine()
                 if(eLoc != null && eLoc.toInt() >= 0) {
                     print("Processes to Consider - as list (i.e. 0,7,3,2) or type 'A' for all: ")
-                    val processList = readLine()
-                    if(processList != null) {
-                        print("Operator (&/|): ")
-                        val operator = readLine()
+                    val processCSList = readLine()
+                    if(processCSList != null) {
+                        val processList = if (processCSList.decapitalize().contains('a')) {
+                            model.processes.indices.toMutableList()
+                        } else {
+                            processCSList.extractCSList(model)
+                        }
+                        val operator = if(processList.size != 1) {
+                            print("Operator (&/|): ")
+                            readLine()
+                        } else {
+                            "&" // since only only one process in list, any operator will do, so user does not need to select one
+                        }
                         if (operator != null && (operator == "|" || operator == "&")) {
                             return Encoder.Test("reachability", eLoc.toInt(), processList, operator)
                         } else {
@@ -131,5 +146,22 @@ object CLI {
                 print("Please try again - ")
             }
         } while (true)
+    }
+
+    private fun String.extractCSList(model: Parser.Model): MutableList<Int> {
+        var listTrimmed = this.dropLastWhile { it == ')' }.dropWhile { it == '(' }
+        val list = mutableListOf<Int>()
+        if (listTrimmed.decapitalize() == "all" || listTrimmed.decapitalize() == "a") {
+            for (pId in model.processes.indices) {
+                list.add(pId)
+            }
+        } else {
+            while (listTrimmed.contains(',')) {
+                list.add(listTrimmed.substringBefore(',').trim().toInt())
+                listTrimmed = listTrimmed.substringAfter(',').trim()
+            }
+            list.add(listTrimmed.toInt())
+        }
+        return list
     }
 }

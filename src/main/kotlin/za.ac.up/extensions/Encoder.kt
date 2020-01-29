@@ -12,16 +12,53 @@ import kotlin.math.log2
 
 class Encoder(private val model: Parser.Model) {
 
-    data class Test(val type: String, val location: Int, val processList: String, val operator: String, val fairnessON: Boolean = false)
-    data class Transition(val guard: String, val assignments: List<String>)
+    data class ConjunctOver<T>(val conjunctOver: List<T>)
+
+    data class DisjoinOver<T>(val disjoinOver: MutableList<T> = mutableListOf())
+
+    /**
+     * Information for evaluation of [encodedModelTemplate]
+     *
+     * @param type "liveness" or "reachability"
+     * @param location progressLocationId if type is liveness, else errorLocationId
+     * @param processList list of processes to be considered
+     * @param operator (| or &) indicates if processList should be conjuncted or disjoined
+     * @param fairnessON if TRUE then fairness should be checked
+     */
+    data class Test(val type: String, val location: Int, val processList: List<Int>, val operator: String, val fairnessON: Boolean = false)
+
+    /**
+     * An encoded transition as an encoded guard and a list of encoded assignments
+     *
+     * @param guard encoded guard
+     * @param assignments list of encoded assignments
+     */
+    data class Transition(val guard: String, val assignments: ConjunctOver<String>)
+
+    /**
+     * Two nodes and the transition between them, all encoded
+     *
+     * @param parentProcess id of process to whom this belongs
+     * @param oldLocation location from which transition originated, encoded
+     * @param transition the transition between the nodes, encoded
+     * @param newLocation location to which transition goes, encoded
+     * @param idle list created when [idleAllExcept] has been called on all processes save the [parentProcess]
+     */
     data class Link(
         val parentProcess: Int,
         val oldLocation: String,
         val transition: Transition,
         val newLocation: String,
-        val idle: List<String>
+        val idle: ConjunctOver<String>
     )
-    private val encodedModel: MutableList<Link> = mutableListOf()
+
+    /**
+     * Encoded [model] using three valued abstraction
+     *
+     * Contains general timestamp indicators i and I (denoting i + 1) to be replaced upon formula creation with non-negative integers
+     */
+    private val encodedModelTemplate: DisjoinOver<Link> = DisjoinOver()
+
     private data class StepStat(
         val locationStatus: MutableList<String>,
         val predicateStatus: MutableList<String>,
@@ -37,12 +74,16 @@ class Encoder(private val model: Parser.Model) {
         encodeModel()
     }
 
-    //=================================================================================================================
-    //====== Encoding functions based on TVAMCUS paper are referred to by their definition numbers in said paper ======
-    //=================================================================================================================
-
-    //by Definition 7
-    private fun Int.encLocation(timestamp: String = "i", pId: Int, digit: Int): String {
+    /**
+     * Encodes location
+     * by Definition 7
+     *
+     * @param pId ID of process the location belongs to
+     * @param timestamp the timestamp location is encoded for, by default placeholder "i" is used
+     * @return enc(loc_i)
+     */
+    private fun Int.encLocation(pId: Int, timestamp: String = "i"): String {
+        val digit = digitRequired(model.processes[pId].numberOfLocations())
         var output = ""
         var binaryId = this.toBinaryString()
         while(binaryId.length < digit) {
@@ -58,8 +99,17 @@ class Encoder(private val model: Parser.Model) {
         }
         return "(${output.dropLast(3)})"
     }
-    //by an extension of Definition 7
-    private fun Int.encLocationCopy(timestamp: String = "i", pId: Int, digit: Int): String {
+
+    /**
+     * Encodes location as copy
+     * by an extension of Definition 7
+     *
+     * @param pId ID of process the location belongs to
+     * @param timestamp the timestamp location is encoded for (by default placeholder "i" is used)
+     * @return enc(loc_i) copy
+     */
+    private fun Int.encLocationCopy(pId: Int, timestamp: String = "i"): String {
+        val digit = digitRequired(model.processes[pId].numberOfLocations())
         var output = ""
         var binaryId = this.toBinaryString()
         while(binaryId.length < digit) {
@@ -75,7 +125,12 @@ class Encoder(private val model: Parser.Model) {
         }
         return "(${output.dropLast(3)})"
     }
-    //helper function
+
+    /**
+     * Creates the binary representation of an integer from a decimal input
+     *
+     * @return binary string of input integer
+     */
     private fun Int.toBinaryString(): String {
         return if(this / 2 > 0) {
             "${(this / 2).toBinaryString()}${this % 2}"
@@ -84,30 +139,65 @@ class Encoder(private val model: Parser.Model) {
         }
     }
 
-    //by Definition 8
+    /**
+     * Encodes the setting true of the predicate it is called on
+     * by Definition 8
+     *
+     * @param timestamp the timestamp predicate will become true on (by default placeholder "I" is used)
+     * @return enc(p = true)
+     */
     private fun String.encSetTrue(timestamp: String = "I"): String {
         return "(~${this}_${timestamp}_u & ${this}_${timestamp}_t)"
     }
-    //by an extension of Definition 8
+    /**
+     * Encodes a copy of the-setting-true-of the predicate it is called on
+     * by Definition 8
+     *
+     * @param timestamp the timestamp predicate will become true on (by default placeholder "I" is used)
+     * @return enc(p = true) copy
+     */
     private fun String.encSetTrueCopy(timestamp: String = "I"): String {
         return "(~${this}_${timestamp}_u_c & ${this}_${timestamp}_t_c)"
     }
 
-    //by Definition 8
+    /**
+     * Encodes the setting-false-of the predicate it is called on
+     * by Definition 8
+     *
+     * @param timestamp the timestamp predicate will become true on (by default placeholder "I" is used)
+     * @return enc(p = false)
+     */
     private fun String.encSetFalse(timestamp: String = "I"): String {
         return "(~${this}_${timestamp}_u & ~${this}_${timestamp}_t)"
     }
-    //by an extension of Definition 8
+    /**
+     * Encodes a copy of the setting-false-of the predicate it is called on
+     * by Definition 8
+     *
+     * @param timestamp the timestamp predicate will become true on (by default placeholder "I" is used)
+     * @return enc(p = false) copy
+     */
     private fun String.encSetFalseCopy(timestamp: String = "I"): String {
         return "(~${this}_${timestamp}_u_c & ~${this}_${timestamp}_t_c)"
     }
 
-    //by Definition 8
+    /**
+     * Encodes the setting-unknown-of the predicate it is called on
+     * by Definition 8
+     * @param timestamp the timestamp predicate will become true on (by default placeholder "I" is used)
+     * @return enc(p = unknown)
+     */
     private fun String.encSetUnknown(timestamp: String = "I"): String {
         return "${this}_${timestamp}_u"
     }
 
-    //by Definition 9
+    /**
+     * Encodes the predicate (a string representation of an int) it is called on
+     * by Definition 9
+     *
+     * @param timestamp the timestamp predicate is encoded for (by default placeholder "i" is used)
+     * @return enc(p)
+     */
     private fun String.encPredicate(timestamp: String = "i"): String {
         if (this == "") {
             return ""
@@ -127,17 +217,24 @@ class Encoder(private val model: Parser.Model) {
         }
     }
 
-    //by Definition 9
-    private fun encExp(input: String, timestamp: String = "i", negate: Boolean = false): String {
+    /**
+     * Encodes the expression it is called on
+     * by Definition 9
+     *
+     * @param timestamp the timestamp expression is encoded for (by default placeholder "i" is used)
+     * @param negate if TRUE expression is negated before being encoded
+     * @return enc(exp)
+     */
+    private fun String.encExp(timestamp: String = "i", negate: Boolean = false): String {
         var output = ""
         var predicate = ""
         var operator = ""
         var previousWasPredicate = false
 
         val expression = if(negate) {
-            "(${p.parse(input).negate().nnf()})"
+            "(${p.parse(this).negate().nnf()})"
         } else {
-            input
+            this
         }
 
         for (c in expression) {
@@ -172,20 +269,32 @@ class Encoder(private val model: Parser.Model) {
         }
     }
 
-    //by Definition 9
-    private fun encGuard(input: String): String {
-        return if (input.startsWith("choice(")) {
-            val choices = input.drop(7).dropLast(1)
+    /**
+     * Encodes the guard it is called on
+     * by Definition 9
+     *
+     * @return encoded guard
+     */
+    private fun String.encGuard(): String {
+        return if (this.startsWith("choice(")) {
+            val choices = this.drop(7).dropLast(1)
             encGuardChoice(
                 choices.substringBefore(','),
                 choices.substringAfter(',').dropWhile { it == ' ' }
             )
         } else {
-            encExp("(${p.parse(input).nnf()})")
+            "(${p.parse(this).nnf()})".encExp()
         }
     }
 
-    //by Definition 9
+    /**
+     * Encodes a guard choice
+     * by Definition 9
+     *
+     * @param left the left hand option of a guard choice
+     * @param right the right hand option of a guard choice
+     * @return encoded guard
+     */
     private fun encGuardChoice(left: String, right: String): String {
         return if(left == "${'$'}true") {
             "${'$'}true"
@@ -194,15 +303,22 @@ class Encoder(private val model: Parser.Model) {
         } else if(left == "${'$'}false" && right == "${'$'}false") {
             "unknown"
         } else {
-            "((${encExp(left)} | ${encExp(right, negate = true)}) & (${encExp(left)} | ${encExp(right)} | unknown))"
+            "((${left.encExp()} | ${right.encExp(negate = true)}) & (${left.encExp()} | ${right.encExp()} | unknown))"
         }
     }
 
-    //by Definition 10
-    private fun idleAllExcept(activeProcessId: Int): MutableList<String> {
+    /**
+     * Sets node status for timestamp i equal to that of I for all processes save [activeProcess]
+     * by Definition 10
+     * note: timestamp i + 1 denoted as I
+     *
+     * @param activeProcess process to be excluded from idle
+     * @return encoded idle processes for timestamp i to I
+     */
+    private fun idleAllExcept(activeProcess: Int): MutableList<String> {
         val conjunctOver = mutableListOf<String>()
         for((pId, p) in model.processes.withIndex()) {
-            if(activeProcessId != pId) {
+            if(activeProcess != pId) {
                 val tally = p.numberOfLocations()
                 for(locationId in 0..tally) {
                     for(d in 0..digitRequired(tally)) {
@@ -213,8 +329,12 @@ class Encoder(private val model: Parser.Model) {
         }
         return conjunctOver
     }
-    //helper function
-    //counts locations in json model
+
+    /**
+     * Counts number of locations in process it is called on
+     *
+     * @return the number of locations (nodes) in target process
+     */
     private fun Parser.Process.numberOfLocations(): Int {
         var tally = 0
         for (transition in this.transitions) {
@@ -226,8 +346,13 @@ class Encoder(private val model: Parser.Model) {
         }
         return tally + 1
     }
-    //helper function
-    //returns number of bits required to represent num locations using a binary string
+
+    /**
+     * Calculates the number of bits required to name a given amount of nodes using bits
+     *
+     * @param numLocations the number of locations that have to be named
+     * @return the amount of bits required
+     */
     private fun digitRequired(numLocations: Int): Int {
         return if (numLocations == 1) {
             1
@@ -236,7 +361,14 @@ class Encoder(private val model: Parser.Model) {
         }
     }
 
-    //by Definition 10
+    /**
+     * Encodes predicate assignment, based on choice([left], [right])
+     * by Definition 10
+     *
+     * @param left left hand option
+     * @param right right hand option
+     * @param p the predicate to be assigned to TRUE, FALSE, or UNKNOWN
+     */
     private fun encAssignmentChoice(left: String, right: String, p: String): String {
         return if (left == "${'$'}true" && left == "${'$'}false") {
             p.encSetTrue()
@@ -245,13 +377,21 @@ class Encoder(private val model: Parser.Model) {
         } else if (right == "${'$'}false" && left == "${'$'}false") {
             p.encSetUnknown()
         } else {
-            "((${encExp(left)} & ${p.encSetTrue()}) | " +
-            "(${encExp(right)} & ${p.encSetFalse()}) | " +
-            "(${encExp("($left | $right)", negate = true).replace("unknown", "${'$'}true")} & ${p.encSetUnknown()}))"
+            "((${left.encExp()} & ${p.encSetTrue()}) | " +
+            "(${right.encExp()} & ${p.encSetFalse()}) | " +
+            "(${("($left | $right)").encExp(negate = true).replace("unknown", "${'$'}true")} & ${p.encSetUnknown()}))"
         }
     }
 
-    //by Definition 10
+    /**
+     * Encodes the predicate it is called on, based on [input]
+     * by Definition 10
+     *
+     * If assignment is not a choice() turn it into one and call [encAssignmentChoice]
+     *
+     * @param input data on how to assign the predicate
+     * @return encoded assignment
+     */
     private fun String.encAssignTo(input: String): String {
         return if (input.startsWith("choice(")) {
             encAssignmentChoice(
@@ -264,7 +404,10 @@ class Encoder(private val model: Parser.Model) {
         }
     }
 
-    //by Definition 10
+    /**
+     *
+     * by Definition 10
+     */
     private fun keepPredicatesStable(toIgnore: MutableList<Int>): MutableList<String> {
         val conjunctOver = mutableListOf<String>()
         if(model.predicates.isEmpty()) {
@@ -278,30 +421,36 @@ class Encoder(private val model: Parser.Model) {
         return conjunctOver
     }
 
-    //by Definition 10
-    private fun encTransition(t: Parser.Transition): Transition {
+    /**
+     * Encodes the transition it is called on
+     * by Definition 10
+     *
+     * @return encoded transition
+     */
+    private fun Parser.Transition.encTransition(): Transition {
         val butChange = mutableListOf<Int>()
         val conjunctOver = mutableListOf<String>()
-        for(a in t.assignments) {
+        for(a in this.assignments) {
             butChange.add(a.predicate)
             conjunctOver.add("${a.predicate}".encAssignTo(a.RHS))
         }
         conjunctOver.addAll(keepPredicatesStable(butChange))
-        return Transition(guard = encGuard(t.guard), assignments = conjunctOver)
+        return Transition(guard = this.guard.encGuard(), assignments = ConjunctOver(conjunctOver))
     }
 
-    //this function creates our encoded formulaTemplate
+    /**
+     * Instantiates the [encodedModelTemplate] by encoding the entire [model]
+     */
     private fun encodeModel() {
         for((pId, process) in model.processes.withIndex()) {
             for (t in process.transitions) {
-                val digit = digitRequired(process.numberOfLocations())
-                encodedModel.add(
+                encodedModelTemplate.disjoinOver.add(
                     Link(
                         pId,
-                        (t.source).encLocation("i", pId, digit),
-                        encTransition(t),
-                        (t.destination).encLocation("I", pId, digit),
-                        idleAllExcept(pId)
+                        (t.source).encLocation(pId, "i"),
+                        t.encTransition(),
+                        (t.destination).encLocation(pId, "I"),
+                        ConjunctOver(idleAllExcept(pId))
                     )
                 )
             }
@@ -311,23 +460,26 @@ class Encoder(private val model: Parser.Model) {
         println("...modelEncoded")
     }
 
-    //=================================================================================================================
-    //=================================================== Evaluator ===================================================
-    //=================================================================================================================
-
+    //=====================================================================================================================
+    //===================================================== Evaluator =====================================================
+    //=====================================================================================================================
+    /**
+     * The tool used to evaluate [model] by using [encodedModelTemplate]
+     *
+     * @param test the properties of [model] to be tested on [encodedModelTemplate]
+     */
     inner class Evaluator(private val test: Test) {
 
         private val predicates = mutableListOf<String>()
-        private val processesToCheck = mutableListOf<Int>()
-
         init {
-            processesToCheck += (test.processList).extractCSList()
             if (test.type == "liveness") {
                 derivePredicates()
             }
         }
-
-        //helper function
+        /**
+         * Derives the full list of predicates that are in [encodedModelTemplate]
+         * and adds them to [predicates] for future use
+         */
         private fun derivePredicates() {
             for (p in model.predicates) {
                 predicates.add("${p.value}_i_u")
@@ -340,28 +492,15 @@ class Encoder(private val model: Parser.Model) {
             }
         }
 
-        //helper function
-        private fun String.extractCSList(): MutableList<Int> {
-            var listTrimmed = this.dropLastWhile { it == ')' }.dropWhile { it == '(' }
-            val list = mutableListOf<Int>()
-            if (listTrimmed.decapitalize() == "all" || listTrimmed.decapitalize() == "a") {
-                for (pId in model.processes.indices) {
-                    list.add(pId)
-                }
-            } else {
-                while (listTrimmed.contains(',')) {
-                    list.add(listTrimmed.substringBefore(',').trim().toInt())
-                    listTrimmed = listTrimmed.substringAfter(',').trim()
-                }
-                list.add(listTrimmed.toInt())
-            }
-            return list
-        }
-
-        //formula creation function
+        /**
+         * Creates timestamp specific formula from [encodedModelTemplate]
+         *
+         * @param t timestamp to create formula for
+         * @return the encoded [model] formula for timestamp [t]
+         */
         private fun formulaForTimestamp(t: Int): Formula {
             val bigOr = mutableListOf<Formula>()
-            for (link in encodedModel) {
+            for (link in encodedModelTemplate.disjoinOver) {
                 bigOr.add(link toFormulaWithTimestamp t)
             }
             return ff.or(bigOr)
@@ -387,7 +526,7 @@ class Encoder(private val model: Parser.Model) {
             assignmentsFormula.add(
                 p.parse(guard insertTimestamp timestamp)
             )
-            assignments.forEach {
+            assignments.conjunctOver.forEach {
                 assignmentsFormula.add(p.parse(it insertTimestamp timestamp))
             }
             return ff.and(assignmentsFormula)
@@ -401,7 +540,7 @@ class Encoder(private val model: Parser.Model) {
         //makes formula from formulaTemplate, using input timestamp as lower bound
         private infix fun Link.toFormulaWithTimestamp(t: Int): Formula {
             val idleFormula = mutableListOf<Formula>()
-            idle.forEach {
+            idle.conjunctOver.forEach {
                 idleFormula.add(p.parse(it insertTimestamp t))
             }
             return ff.and(
@@ -435,16 +574,15 @@ class Encoder(private val model: Parser.Model) {
                     "(${it.replace("i", "I")}_c <=> (((re_i & ~rd_i) => $it) & (~(re_i & ~rd_i) => ${it}_c)))"
                 )
             }
-            bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${encProgress(processesToCheck)})))")
+            bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${encProgress(test.processList)})))")
             return bigAnd
         }
 
         //helper function
-        private fun encProgress(toCheck: MutableList<Int>): String {
+        private fun encProgress(toCheck:List<Int>): String {
             var progress = ""
             for (pId in toCheck) {
-                val process = model.processes[pId]
-                progress += test.location.encLocation(pId = pId, digit = digitRequired(process.numberOfLocations()))
+                progress += test.location.encLocation(pId)
                 progress += " ${test.operator} "
             }
             return progress.dropLast(3)
@@ -453,12 +591,11 @@ class Encoder(private val model: Parser.Model) {
         //by Definition 11/12?
         private fun init(): Formula {
             val conjunctOver = mutableListOf<Formula>()
-            for ((pId, process) in model.processes.withIndex()) {
-                val digit = digitRequired(process.numberOfLocations())
-                conjunctOver.add(p.parse(0.encLocation("0", pId, digit)))
+            for (pId in model.processes.indices) {
+                conjunctOver.add(p.parse(0.encLocation(pId, timestamp = "0")))
                 if (test.type == "liveness") {
                     conjunctOver.add(p.parse("~rd_0 & ~lv_0"))
-                    conjunctOver.add(p.parse(0.encLocationCopy("0", pId, digit)))
+                    conjunctOver.add(p.parse(0.encLocationCopy(pId, timestamp = "0")))
                     if(test.fairnessON) {
                         conjunctOver.add(p.parse("~fr_0_${pId}"))
                     }
@@ -468,17 +605,17 @@ class Encoder(private val model: Parser.Model) {
                 val initAs: Boolean? = model.init[predicate.key]
                 conjunctOver.add(
                     if (initAs != null && !initAs) {
-                        p.parse(("${predicate.value}").encSetFalse("0"))
+                        p.parse(("${predicate.value}").encSetFalse(timestamp = "0"))
                     } else {
-                        p.parse(("${predicate.value}").encSetTrue("0"))
+                        p.parse(("${predicate.value}").encSetTrue(timestamp = "0"))
                     }
                 )
                 if(test.type == "liveness") {
                     conjunctOver.add(
                         if (initAs != null && !initAs) {
-                            p.parse(("${predicate.value}").encSetFalseCopy("0"))
+                            p.parse(("${predicate.value}").encSetFalseCopy(timestamp = "0"))
                         } else {
-                            p.parse(("${predicate.value}").encSetTrueCopy("0"))
+                            p.parse(("${predicate.value}").encSetTrueCopy(timestamp = "0"))
                         }
                     )
                 }
@@ -489,10 +626,8 @@ class Encoder(private val model: Parser.Model) {
         //by Definition 11/12?
         private fun errorLocation(e: Int, bound: Int = 10): Formula {
             val toJoin = mutableListOf<Formula>()
-            for (pId in processesToCheck) {
-                val process = model.processes[pId]
-                val digit = digitRequired(process.numberOfLocations())
-                toJoin.add(p.parse(e.encLocation(bound.toString(), pId, digit)))
+            for (pId in test.processList) {
+                toJoin.add(p.parse(e.encLocation(pId, timestamp = bound.toString())))
             }
             return if (test.operator == "|") ff.or(toJoin) else ff.and(toJoin)
         }
