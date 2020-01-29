@@ -405,20 +405,24 @@ class Encoder(private val model: Parser.Model) {
     }
 
     /**
-     *
+     * Sets all predicates, save [toIgnore], equal to themselves for the next timestamp
      * by Definition 10
+     *
+     * @param toIgnore list of predicates that should have the ability to change
+     * @return [ConjunctOver] of logical expressions of the form p_i <=> p_I
      */
-    private fun keepPredicatesStable(toIgnore: MutableList<Int>): MutableList<String> {
-        val conjunctOver = mutableListOf<String>()
+    private fun keepPredicatesStable(toIgnore: MutableList<Int>): ConjunctOver<String> {
+        val bigAnd = mutableListOf<String>()
         if(model.predicates.isEmpty()) {
-            return conjunctOver
+            return ConjunctOver(bigAnd)
         }
-        for(p in model.predicates) {
-            if(!toIgnore.contains(p.value)) {
-                conjunctOver.add(encAssignmentChoice("${p.value}", "~${p.value}", "${p.value}"))
+        for(predicate in model.predicates) {
+            val p = predicate.value.toString()
+            if(!toIgnore.contains(predicate.value)) {
+                bigAnd.add("(${p.encSetTrue("i")} <=> ${p.encSetTrue("I")}) & (${p.encSetUnknown("i")} <=> ${p.encSetUnknown("I")})")
             }
         }
-        return conjunctOver
+        return ConjunctOver(bigAnd)
     }
 
     /**
@@ -434,8 +438,7 @@ class Encoder(private val model: Parser.Model) {
             butChange.add(a.predicate)
             conjunctOver.add("${a.predicate}".encAssignTo(a.RHS))
         }
-        conjunctOver.addAll(keepPredicatesStable(butChange))
-        return Transition(guard = this.guard.encGuard(), assignments = ConjunctOver(conjunctOver))
+        return Transition(guard = this.guard.encGuard(), assignments = keepPredicatesStable(butChange))
     }
 
     /**
@@ -520,24 +523,39 @@ class Encoder(private val model: Parser.Model) {
             return ff.and(conjunctOver)
         }*/
 
-        //modifies formula so as to be removable from SAT memory by adding a "removal formula"
-        private infix fun Transition.toFormulaWithTimestamp(timestamp: Int): Formula {
+        /**
+         * Creates timestamp specific formula from [Transition] it is called on
+         *
+         * @param t timestamp to create formula for
+         * @return the encoded [model] formula for timestamp [t]
+         */
+        private infix fun Transition.toFormulaWithTimestamp(t: Int): Formula {
             val assignmentsFormula = mutableListOf<Formula>()
             assignmentsFormula.add(
-                p.parse(guard insertTimestamp timestamp)
+                p.parse(guard insertTimestamp t)
             )
             assignments.conjunctOver.forEach {
-                assignmentsFormula.add(p.parse(it insertTimestamp timestamp))
+                assignmentsFormula.add(p.parse(it insertTimestamp t))
             }
             return ff.and(assignmentsFormula)
         }
 
-        //helper function
+        /**
+         * Replaces i in the string it was called on with [t] and I with ([t] + 1)
+         *
+         * @param t timestamp to insert into string
+         * @return string with [t] inserted where placeholders were
+         */
         private infix fun String.insertTimestamp(t: Int): String {
             return this.replace("i", "$t").replace("I", "${t + 1}")
         }
 
-        //makes formula from formulaTemplate, using input timestamp as lower bound
+        /**
+         * Creates timestamp specific formula from the [Link] it is called on
+         *
+         * @param [t] timestamp to encode [Link] for
+         * @return encoded formula of the [Link]
+         */
         private infix fun Link.toFormulaWithTimestamp(t: Int): Formula {
             val idleFormula = mutableListOf<Formula>()
             idle.conjunctOver.forEach {
@@ -551,7 +569,10 @@ class Encoder(private val model: Parser.Model) {
                 if (test.type == "liveness") this.parentProcess.livenessEvaluationFormula(t) else null
             )
         }
-        //helper functions
+
+        /**
+         * by Definition?
+         */
         private fun Int.livenessEvaluationFormula(t: Int): Formula {
             val bigAnd = mutableListOf<Formula>()
             encStateRecord().forEach {
@@ -565,7 +586,10 @@ class Encoder(private val model: Parser.Model) {
             }
             return ff.and(bigAnd)
         }
-        //by definition ?
+
+        /**
+         * by Definition?
+         */
         private fun encStateRecord(): List<String> {
             val bigAnd = mutableListOf<String>()
             bigAnd.add("(rd_I <=> (re_i | rd_i))")
@@ -574,21 +598,25 @@ class Encoder(private val model: Parser.Model) {
                     "(${it.replace("i", "I")}_c <=> (((re_i & ~rd_i) => $it) & (~(re_i & ~rd_i) => ${it}_c)))"
                 )
             }
-            bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${encProgress(test.processList)})))")
+            bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${test.processList.encProgress()})))")
             return bigAnd
         }
 
-        //helper function
-        private fun encProgress(toCheck:List<Int>): String {
+        /**
+         * helper function
+         */
+        private fun List<Int>.encProgress(): String {
             var progress = ""
-            for (pId in toCheck) {
+            for (pId in this) {
                 progress += test.location.encLocation(pId)
                 progress += " ${test.operator} "
             }
             return progress.dropLast(3)
         }
 
-        //by Definition 11/12?
+        /**
+         * by Definition 11/12?
+         */
         private fun init(): Formula {
             val conjunctOver = mutableListOf<Formula>()
             for (pId in model.processes.indices) {
@@ -623,15 +651,24 @@ class Encoder(private val model: Parser.Model) {
             return ff.and(conjunctOver)
         }
 
-        //by Definition 11/12?
-        private fun errorLocation(e: Int, bound: Int = 10): Formula {
+        /**
+         * Encodes location it is called on as the error location for timestamp [t]
+         * by Definition 11/12?
+         *
+         * @param t timestamp for which location is deemed as the error location
+         * @return formula of error location for timestamp [t]
+         */
+        private fun Int.errorLocation(t: Int = 10): Formula {
             val toJoin = mutableListOf<Formula>()
             for (pId in test.processList) {
-                toJoin.add(p.parse(e.encLocation(pId, timestamp = bound.toString())))
+                toJoin.add(p.parse(this.encLocation(pId, timestamp = t.toString())))
             }
             return if (test.operator == "|") ff.or(toJoin) else ff.and(toJoin)
         }
 
+        /**
+         * by Definition?
+         */
         private fun livenessProperty(t: Int): Formula {
             val bigAnd = mutableListOf<Formula>()
             bigAnd.add(p.parse("rd_$t"))
@@ -765,13 +802,16 @@ class Encoder(private val model: Parser.Model) {
             return false
         }*/
 
+        /**
+         *
+         */
         fun evaluateNoOptimization(bound: Int) {
             val performanceLog = mutableListOf<Long>()
             val stepResults = mutableListOf<Tristate>()
             val startTime = System.nanoTime()
             var formula = init()
             for (t in 0 until bound + 1) {
-                val property = if (test.type == "liveness") livenessProperty(t) else errorLocation(test.location, t)
+                val property = if (test.type == "liveness") livenessProperty(t) else test.location.errorLocation(t)
                 print(" k(a)=$t")
                 val unitStartTimeA = System.nanoTime()
                 solver.reset()
