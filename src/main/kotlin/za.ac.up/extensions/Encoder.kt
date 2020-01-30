@@ -149,6 +149,7 @@ class Encoder(private val model: Parser.Model) {
     private fun String.encSetTrue(timestamp: String = "I"): String {
         return "(~${this}_${timestamp}_u & ${this}_${timestamp}_t)"
     }
+
     /**
      * Encodes a copy of the-setting-true-of the predicate it is called on
      * by Definition 8
@@ -170,6 +171,7 @@ class Encoder(private val model: Parser.Model) {
     private fun String.encSetFalse(timestamp: String = "I"): String {
         return "(~${this}_${timestamp}_u & ~${this}_${timestamp}_t)"
     }
+
     /**
      * Encodes a copy of the setting-false-of the predicate it is called on
      * by Definition 8
@@ -308,9 +310,8 @@ class Encoder(private val model: Parser.Model) {
     }
 
     /**
-     * Sets node status for timestamp i equal to that of I for all processes save [activeProcess]
+     * Idles all processes save [activeProcess] by keeping their nodes stable from i to I
      * by Definition 10
-     * note: timestamp i + 1 denoted as I
      *
      * @param activeProcess process to be excluded from idle
      * @return encoded idle processes for timestamp i to I
@@ -348,7 +349,7 @@ class Encoder(private val model: Parser.Model) {
     }
 
     /**
-     * Calculates the number of bits required to name a given amount of nodes using bits
+     * Calculates the number of bits required to name a given amount of nodes using binary
      *
      * @param numLocations the number of locations that have to be named
      * @return the amount of bits required
@@ -551,7 +552,56 @@ class Encoder(private val model: Parser.Model) {
         }
 
         /**
+         * helper function
+         */
+        private fun List<Int>.encProgress(): String {
+            var progress = ""
+            for (pId in this) {
+                progress += test.location.encLocation(pId)
+                progress += " ${test.operator} "
+            }
+            return progress.dropLast(3)
+        }
+        /**
+         * by Definition?
+         */
+        private fun encStateRecord(): List<String> {
+            val bigAnd = mutableListOf<String>()
+            bigAnd.add("(rd_I <=> (re_i | rd_i))")
+            predicates.distinct().forEach {
+                bigAnd.add(
+                    "(${it.replace("i", "I")}_c <=> (((re_i & ~rd_i) => $it) & (~(re_i & ~rd_i) => ${it}_c)))"
+                )
+            }
+            bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${test.processList.encProgress()})))")
+            return bigAnd
+        }
+
+        /**
+         * Creates the liveness location encoding of the Int it is called on
+         * by Definition?
+         *
+         * @param t timestamp formula is to be created for
+         * @return [Formula] to conjunct with the encoding of each [Link] when testing liveness
+         */
+        private fun Int.livenessEvaluationFormula(t: Int): Formula {
+            val bigAnd = mutableListOf<Formula>()
+            encStateRecord().forEach {
+                bigAnd.add(p.parse(it insertTimestamp t))
+            }
+            if (test.fairnessON) {
+                bigAnd.add(p.parse("(fr_I_${this} <=> (re_i | rd_i))" insertTimestamp t))
+                for(pId in model.processes.indices.filterNot{ it == this }) {
+                    bigAnd.add(p.parse("(fr_${t + 1}_${pId} <=> fr_${t}_${pId})"))
+                }
+            }
+            return ff.and(bigAnd)
+        }
+
+        /**
          * Creates timestamp specific formula from the [Link] it is called on
+         *
+         * Note, [Test.type] is also taken into account when encoding the [Link]
          *
          * @param [t] timestamp to encode [Link] for
          * @return encoded formula of the [Link]
@@ -571,51 +621,10 @@ class Encoder(private val model: Parser.Model) {
         }
 
         /**
-         * by Definition?
-         */
-        private fun Int.livenessEvaluationFormula(t: Int): Formula {
-            val bigAnd = mutableListOf<Formula>()
-            encStateRecord().forEach {
-                bigAnd.add(p.parse(it insertTimestamp t))
-            }
-            if (test.fairnessON) {
-                bigAnd.add(p.parse("(fr_I_${this} <=> (re_i | rd_i))" insertTimestamp t))
-                for(pId in model.processes.indices.filterNot{ it == this }) {
-                    bigAnd.add(p.parse("(fr_${t + 1}_${pId} <=> fr_${t}_${pId})"))
-                }
-            }
-            return ff.and(bigAnd)
-        }
-
-        /**
-         * by Definition?
-         */
-        private fun encStateRecord(): List<String> {
-            val bigAnd = mutableListOf<String>()
-            bigAnd.add("(rd_I <=> (re_i | rd_i))")
-            predicates.distinct().forEach {
-                bigAnd.add(
-                    "(${it.replace("i", "I")}_c <=> (((re_i & ~rd_i) => $it) & (~(re_i & ~rd_i) => ${it}_c)))"
-                )
-            }
-            bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${test.processList.encProgress()})))")
-            return bigAnd
-        }
-
-        /**
-         * helper function
-         */
-        private fun List<Int>.encProgress(): String {
-            var progress = ""
-            for (pId in this) {
-                progress += test.location.encLocation(pId)
-                progress += " ${test.operator} "
-            }
-            return progress.dropLast(3)
-        }
-
-        /**
+         * Initializes formula used in [evaluateNoOptimization]
          * by Definition 11/12?
+         *
+         * @return initial state of [model], encoded to formula
          */
         private fun init(): Formula {
             val conjunctOver = mutableListOf<Formula>()
@@ -667,7 +676,14 @@ class Encoder(private val model: Parser.Model) {
         }
 
         /**
+         * Creates liveness property evaluation formula
          * by Definition?
+         *
+         * Creates the formula that turns formula for [t] of [encodedModelTemplate] into a satisfiable formula if and only
+         * if liveness is a feature of the [model] (and, if [Test.fairnessON], fairness also) for timestamp [t]
+         *
+         * @param [t] the timestamp liveness is to be checked for
+         * @return liveness property evaluation formula to be added to formula for [t] of [encodedModelTemplate]
          */
         private fun livenessProperty(t: Int): Formula {
             val bigAnd = mutableListOf<Formula>()
@@ -682,6 +698,12 @@ class Encoder(private val model: Parser.Model) {
             return ff.and(bigAnd)
         }
 
+        /**
+         * Ascertains the status of the literals re_i and rd_i, after being encoded and sent through the SAT solver
+         *
+         * @param [t] used to create the correct instance of re_i and rd_i
+         * @return Pair< statusOf(re_[t]), statusOf(rd_[t]) >
+         */
         private fun SortedSet<Literal>.reRdStatus(t: Int): Pair<String, String> {
             return Pair(
                 if (this.contains(ff.literal("re_$t", true))) "re = true" else "re = false",
@@ -689,6 +711,12 @@ class Encoder(private val model: Parser.Model) {
             )
         }
 
+        /**
+         * Ascertains the status of each predicate in [model], after being encoded and sent through the SAT solver
+         *
+         * @param [t] timestamp to check predicate statuses
+         * @return list of predicates and their respective statuses
+         */
         private fun SortedSet<Literal>.predicateStatus(t: Int): MutableList<String> {
             val predicateStatuses = mutableListOf<String>()
             for(p in model.predicates) {
@@ -703,6 +731,9 @@ class Encoder(private val model: Parser.Model) {
             return predicateStatuses
         }
 
+        /**
+         *
+         */
         private fun SortedSet<Literal>.fairnessStatus(t: Int): MutableList<String> {
             val fairnessVariableStatuses = mutableListOf<String>()
             for(pId in model.processes.indices) {
@@ -802,9 +833,6 @@ class Encoder(private val model: Parser.Model) {
             return false
         }*/
 
-        /**
-         *
-         */
         fun evaluateNoOptimization(bound: Int) {
             val performanceLog = mutableListOf<Long>()
             val stepResults = mutableListOf<Tristate>()
