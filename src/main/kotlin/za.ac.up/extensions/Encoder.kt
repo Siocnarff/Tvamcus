@@ -607,16 +607,18 @@ class Encoder(private val model: Parser.Model) {
          * @return encoded formula of the [Link]
          */
         private infix fun Link.toFormulaWithTimestamp(t: Int): Formula {
-            val idleFormula = mutableListOf<Formula>()
+            val bigAnd = mutableListOf<Formula>()
             idle.conjunctOver.forEach {
-                idleFormula.add(p.parse(it insertTimestamp t))
+                bigAnd.add(p.parse(it insertTimestamp t))
+            }
+            if (test.type == "liveness") {
+                bigAnd.add(this.parentProcess.livenessEvaluationFormula(t))
             }
             return ff.and(
                 p.parse(oldLocation insertTimestamp t),
                 transition toFormulaWithTimestamp t,
                 p.parse(newLocation insertTimestamp t),
-                ff.and(idleFormula),
-                if (test.type == "liveness") this.parentProcess.livenessEvaluationFormula(t) else null
+                ff.and(bigAnd)
             )
         }
 
