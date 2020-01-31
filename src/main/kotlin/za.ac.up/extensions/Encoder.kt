@@ -417,10 +417,9 @@ class Encoder(private val model: Parser.Model) {
         if(model.predicates.isEmpty()) {
             return ConjunctOver(bigAnd)
         }
-        for(predicate in model.predicates) {
-            val p = predicate.value.toString()
-            if(!toIgnore.contains(predicate.value)) {
-                bigAnd.add("(${p.encSetTrue("i")} <=> ${p.encSetTrue("I")}) & (${p.encSetUnknown("i")} <=> ${p.encSetUnknown("I")})")
+        for(p in model.predicates) {
+            if(!toIgnore.contains(p.value)) {
+                bigAnd.add(encAssignmentChoice("${p.value}", "~${p.value}", "${p.value}"))
             }
         }
         return ConjunctOver(bigAnd)
@@ -738,6 +737,10 @@ class Encoder(private val model: Parser.Model) {
          */
         private fun SortedSet<Literal>.fairnessStatus(t: Int): MutableList<String> {
             val fairnessVariableStatuses = mutableListOf<String>()
+            if(!test.fairnessON) {
+                fairnessVariableStatuses.add("n.a.")
+                return fairnessVariableStatuses
+            }
             for(pId in model.processes.indices) {
                 if(this.contains(ff.literal("fr_${t}_${pId}", true))) {
                     fairnessVariableStatuses.add("P$pId = fair")
