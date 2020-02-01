@@ -58,7 +58,12 @@ object CLI {
     }
 
     private fun getTestFor(model: Parser.Model): Encoder.Test {
-        print("\nLiveness or Reachability? (l/r): ")
+
+        print("\nDouble Test? (y/n): ")
+        val dt = readLine()
+        val doubleTest = !(dt == null || dt.decapitalize().contains('n'))
+
+        print("Liveness or Reachability? (l/r): ")
         val type = readLine()
         if(type?.decapitalize() == "l" || type?.decapitalize() ==  "liveness") {
             do {
@@ -85,7 +90,7 @@ object CLI {
                                     "&" // since only only one process in list, any operator will do, so user does not need to select one
                                 }
                                 if(operator != null && (operator == "|" || operator == "&")) {
-                                    return Encoder.Test("liveness", pLoc.toInt(), processList, operator, fairnessOn)
+                                    return Encoder.Test("liveness", pLoc.toInt(), processList, operator, fairnessOn, doubleTest)
                                 } else {
                                     println("Please try again, note '|' -> 'or' but '&' -> 'and'. Please type out the symbols themselves.")
                                 }
@@ -104,7 +109,7 @@ object CLI {
                 print("Error Location: ")
                 val eLoc = readLine()
                 if(eLoc != null && eLoc.toInt() >= 0) {
-                    print("Processes to Consider - as list (i.e. 0,7,3,2) or type 'A' for all: ")
+                    print("Processes to Consider - as list (i.e. 0,7,3,2) or type 'a' for all: ")
                     val processCSList = readLine()
                     if(processCSList != null) {
                         val processList = if (processCSList.decapitalize().contains('a')) {
@@ -119,7 +124,7 @@ object CLI {
                             "&" // since only only one process in list, any operator will do, so user does not need to select one
                         }
                         if (operator != null && (operator == "|" || operator == "&")) {
-                            return Encoder.Test("reachability", eLoc.toInt(), processList, operator)
+                            return Encoder.Test("reachability", eLoc.toInt(), processList, operator, doubleTest = doubleTest)
                         } else {
                             println("Please try again, note:\n'|' -> 'or' but '&' -> 'and'. Please type out the symbols themselves.")
                         }
