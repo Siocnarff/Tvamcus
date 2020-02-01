@@ -9,6 +9,7 @@ import org.logicng.solvers.MiniSat
 import java.util.*
 import kotlin.math.ceil
 import kotlin.math.log2
+import kotlin.math.pow
 
 class Encoder(private val model: Parser.Model) {
 
@@ -25,7 +26,14 @@ class Encoder(private val model: Parser.Model) {
      * @param operator (| or &) indicates if processList should be conjuncted or disjoined
      * @param fairnessON if TRUE then fairness should be checked
      */
-    data class Test(val type: String, val location: Int, val processList: List<Int>, val operator: String, val fairnessON: Boolean = false)
+    data class Test(
+        val type: String,
+        val location: Int,
+        val processList: List<Int>,
+        val operator: String,
+        val fairnessON: Boolean = false,
+        val doubleTest: Boolean = false
+    )
 
     /**
      * An encoded transition as an encoded guard and a list of encoded assignments
@@ -405,13 +413,7 @@ class Encoder(private val model: Parser.Model) {
         }
     }
 
-    /**
-     * Sets all predicates, save [toIgnore], equal to themselves for the next timestamp
-     * by Definition 10
-     *
-     * @param toIgnore list of predicates that should have the ability to change
-     * @return [ConjunctOver] of logical expressions of the form p_i <=> p_I
-     */
+    //by Definition 10
     private fun keepPredicatesStable(toIgnore: MutableList<Int>): ConjunctOver<String> {
         val bigAnd = mutableListOf<String>()
         if(model.predicates.isEmpty()) {
@@ -433,12 +435,13 @@ class Encoder(private val model: Parser.Model) {
      */
     private fun Parser.Transition.encTransition(): Transition {
         val butChange = mutableListOf<Int>()
-        val conjunctOver = mutableListOf<String>()
+        val bigAnd = mutableListOf<String>()
         for(a in this.assignments) {
             butChange.add(a.predicate)
-            conjunctOver.add("${a.predicate}".encAssignTo(a.RHS))
+            bigAnd.add("${a.predicate}".encAssignTo(a.RHS))
         }
-        return Transition(guard = this.guard.encGuard(), assignments = keepPredicatesStable(butChange))
+        bigAnd.addAll(keepPredicatesStable(butChange).conjunctOver)
+        return Transition(guard = this.guard.encGuard(), assignments = ConjunctOver(bigAnd))
     }
 
     /**
@@ -783,6 +786,30 @@ class Encoder(private val model: Parser.Model) {
             return steps
         }
 
+        private fun pathFormula(steps: MutableList<StepStat>): Formula {
+            val bigAnd = mutableListOf<Formula>()
+            for((t, step) in steps.withIndex()) {
+                for((pId, location) in step.locationStatus.withIndex()) {
+                    bigAnd.add(
+                        p.parse(location.toInt().encLocation(pId, t.toString()))
+                    )
+                }
+            }
+            return ff.and(bigAnd)
+        }
+
+        private fun String.toInt(): Int {
+            var tally = 0
+            for((index, c) in this.reversed().withIndex()) {
+                tally += when (c) {
+                    '1' -> (2.0.pow(index)).toInt()
+                    '0' -> 0
+                    else -> throw error("String contains invalid characters, only 1, or 0 allowed.")
+                }
+            }
+            return tally
+        }
+
         private fun MutableList<StepStat>.print() {
             this.forEachIndexed { index, stepStat ->
                 println("\n$index:")
@@ -838,6 +865,48 @@ class Encoder(private val model: Parser.Model) {
             return false
         }*/
 
+        private fun Formula.solveAgainWithConstraint(constraint: Formula, startIndex: Int, bound: Int) {
+            println("\n=============================================================================")
+            println("============= Solving Again with constraint - restarting timer ==============")
+            println("=============================================================================\n")
+            val performanceLog = mutableListOf<Long>()
+            val stepResults = mutableListOf<Tristate>()
+            val startTime = System.nanoTime()
+            var formula = ff.and(this, constraint)
+            for (t in startIndex until bound + 1) {
+                val property = if (test.type == "liveness") livenessProperty(t) else test.location.errorLocation(t)
+                print(" k(a)=$t")
+                val unitStartTimeA = System.nanoTime()
+                solver.reset()
+                solver.add(ff.and(formula, property, p.parse("unknown")))
+                stepResults.add(solver.sat())
+                performanceLog.add(System.nanoTime() - unitStartTimeA)
+                printStepStat(performanceLog.last(), stepResults.last().toString())
+                if (stepResults.last() == Tristate.TRUE) {
+                    val pathInfo = solver.model().literals().pathInfo(t)
+                    print(" k(b)=$t")
+                    val unitStartTimeB = System.nanoTime()
+                    solver.reset()
+                    solver.add(ff.and(formula, property, p.parse("~unknown")))
+                    stepResults.add(solver.sat())
+                    performanceLog.add(System.nanoTime() - unitStartTimeB)
+                    printStepStat(performanceLog.last(), stepResults.last().toString())
+                    if (stepResults.last() == Tristate.TRUE) {
+                        val time = System.nanoTime()
+                        println("\nError Path")
+                        solver.model().literals().pathInfo(t).print()
+                        printSatisfiable(startT = startTime, endT = time, timestamp = t)
+                    } else {
+                        val time = System.nanoTime()
+                        pathInfo.print()
+                        printUnknown(startT = startTime, endT = time, timestamp = t)
+                    }
+                    return
+                }
+                formula = ff.and(formula, formulaForTimestamp(t))
+            }
+        }
+
         fun evaluateNoOptimization(bound: Int) {
             val performanceLog = mutableListOf<Long>()
             val stepResults = mutableListOf<Tristate>()
@@ -866,13 +935,20 @@ class Encoder(private val model: Parser.Model) {
                         println("\nError Path")
                         solver.model().literals().pathInfo(t).print()
                         printSatisfiable(startT = startTime, endT = time, timestamp = t)
-                        return
+                        if(test.doubleTest) {
+                            formula.solveAgainWithConstraint(pathFormula(solver.model().literals().pathInfo(t)), t, bound)
+                        }
                     } else {
                         val time = System.nanoTime()
                         pathInfo.print()
                         printUnknown(startT = startTime, endT = time, timestamp = t)
-                        return
+                        if(test.doubleTest) {
+                            formula.solveAgainWithConstraint(pathFormula(pathInfo), t, bound)
+                        }
+
                     }
+
+                    return
                 }
                 formula = ff.and(formula, formulaForTimestamp(t))
             }
