@@ -8,7 +8,7 @@ import com.google.gson.reflect.TypeToken
 import java.io.File
 
 object Parser {
-    data class Model (
+    data class CFGS (
         val predicates: Map<String, Int>,
         val init: Map<String, Boolean>,
         val processes: List<Process>
@@ -148,7 +148,7 @@ object Parser {
         return standardGuard
     }
 
-    fun parseFile (filePath: String): Model {
+    fun parseFile (filePath: String): CFGS {
         val builder = GsonBuilder()
         val gson = builder.create()
         val fileBuffer = File(filePath).bufferedReader()
@@ -179,6 +179,6 @@ object Parser {
                 }
             }
         }
-        return Model(predicates, init, processes)
+        return CFGS(predicates, init, processes)
     }
 }
