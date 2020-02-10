@@ -11,7 +11,21 @@ import kotlin.math.ceil
 import kotlin.math.log2
 import kotlin.math.pow
 
-class Encoder(private val CFGS: Parser.CFGS) {
+/**
+ * Note: Documentation will refer to the research papers the components being documented are based on. The following shorthand will be used.
+ *
+ * SCP19:
+ * Nils Timm, Stefan Gruner,
+ * Three-valued bounded model checking with cause-guided abstraction refinement,
+ * Science of Computer Programming,
+ * Volume 175,
+ * Pages 37-62
+ *
+ * SCP20:
+ * Model Checking Safety and Liveness via k-Induction and Witness Refinement with Constraint Generation
+ * Nils Timm, Stefan Gruner, Madoda Nxumalo, Josua Botha
+ */
+class StateSpaceEncoder(private val CFGS: Parser.CFGS) {
 
     data class ConjunctOver<T>(val conjunctOver: List<T>)
 
@@ -86,7 +100,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
     /**
      * Encodes location
      *
-     * by Definition 7
+     * by Definition 8 in SCP19
      *
      * @param pId ID of process the location belongs to
      * @param timestep the timestep location is encoded for, by default placeholder "i" is used
@@ -113,7 +127,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
     /**
      * Encodes location as copy
      *
-     * by Definition 13
+     * by Definition 8 in SCP19
      *
      * @param pId ID of process the location belongs to
      * @param timestep the timestep location is encoded for, by default placeholder "i" is used
@@ -153,7 +167,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
     /**
      * Encodes that the predicate it is called on is true at the next timestep
      *
-     * by Definition 8
+     * by Definition 9 in SCP19
      *
      * @param timestep predicate is true on (by default placeholder "I" is used)
      * @return enc(p = true)
@@ -165,7 +179,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
     /**
      * Encodes a copy of the fact that the predicate it is called on is true at the next timestep
      *
-     * by Definition 8
+     * by Definition 9 in SCP19
      *
      * @param timestep predicate is true on (by default placeholder "I" is used)
      * @return enc(p = true) copy
@@ -177,7 +191,8 @@ class Encoder(private val CFGS: Parser.CFGS) {
     /**
      * Encodes that the predicate it is called on is false at the next timestep
      *
-     * by Definition 8
+     * by Definition 9 in SCP19
+
      *
      * @param timestep predicate is false on (by default placeholder "I" is used)
      * @return enc(p = false)
@@ -189,7 +204,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
     /**
      * Encodes a copy of the fact that the predicate it is called on is false at the next timestep
      *
-     * by Definition 8
+     * by Definition 9 in SCP19
      *
      * @param timestep predicate is false on (by default placeholder "I" is used)
      * @return enc(p = false) copy
@@ -201,7 +216,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
     /**
      * Encodes that the predicate it is called on is unknown at the next timestep
      *
-     * by Definition 8
+     * by Definition 9 in SCP19
      *
      * @param timestep predicate is unknown on (by default placeholder "I" is used)
      * @return enc(p = unknown)
@@ -213,7 +228,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
     /**
      * Encodes the predicate (a string representation of an int) it is called on
      *
-     * by Definition 9
+     * by Definition 10 in SCP19
      *
      * @param timestep predicate is encoded for (by default placeholder "i" is used)
      * @return enc(p)
@@ -240,7 +255,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
     /**
      * Encodes the expression it is called on
      *
-     * by Definition 9
+     * by Definition 10 in SCP19
      *
      * @param timestep the timestep the expression is encoded for (by default placeholder "i" is used)
      * @param negate if TRUE, expression is negated before being encoded
@@ -293,7 +308,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
     /**
      * Encodes the guard it is called on
      *
-     * by Definition 9
+     * by Definition 10 in SCP19
      *
      * @return encoded guard
      */
@@ -312,7 +327,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
     /**
      * Encodes a guard choice
      *
-     * by Definition 9
+     * by Definition 10 in SCP19
      *
      * @param left the left hand option of a guard choice
      * @param right the right hand option of a guard choice
@@ -334,7 +349,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
      * Encodes that all processes except [activeProcess] make an idle step from i to I
      *
      * Encoded by the constraint that the locations of the idling processes do not change from i to I
-     * by Definition 10
+     * by Definition 11 in SCP19
      *
      * @param activeProcess the process that executes when we move from timestep i to I
      * @return the encoding of the idling of non-active processes
@@ -388,7 +403,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
     /**
      * Encodes predicate assignment, based on choice([left], [right])
      *
-     * by Definition 10
+     * by Definition 11 in SCP19
      *
      * @param left left hand of choice
      * @param right right hand of choice
@@ -412,7 +427,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
      * Encodes the assignment of [expression] to the predicate it is called on
      *
      * If [expression] is not a choice() turn it into one and call [encAssignmentChoice]
-     * by Definition 10
+     * by Definition 11 in SCP19
      *
      * @param expression data on how to assign the predicate
      * @return encoded assignment
@@ -432,7 +447,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
     /**
      * Encodes that the values of all predicates, except [modifiedPredicates], remain unchanged from timestep i to I
      *
-     * by Definition 10
+     * by Definition 11 in SCP19
      *
      * @param modifiedPredicates the predicates that are affected by the current assignment
      * @return Constraint that the non-modified predicates do not change from i to I
@@ -453,7 +468,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
     /**
      * Encodes that the operation associated with [transition] is executed form i to I
      *
-     * by Definition 10
+     * by Definition 11 in SCP19
      *
      * @param transition the transition operation being encoded is derived from
      * @return the encoding of the execution of the operation
@@ -472,7 +487,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
     /**
      * Encodes a state space Transition from i to I
      *
-     * by Definition 10
+     * by Definition 11 in SCP19
      *
      * @param pId the process to which the transition belongs
      * @param transition the [CFGS] transition being encoded
@@ -493,7 +508,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
      *
      * This encoding is stored in [timestepTemplate]
      *
-     * by Definition 10
+     * by Definition 11 in SCP19
      */
     private fun encodeTransitions() {
         for((pId, process) in CFGS.processes.withIndex()) {
@@ -513,7 +528,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
     //=====================================================================================================================
     /**
      *
-     * The tool used to build the encoding of a bounded model checking problem [M \models \psi]_k where M corresponds to the k-bounded state space of [CFGS]
+     * The component used to build the encoding of a bounded model checking problem [M \models \psi]_k where M corresponds to the k-bounded state space of [CFGS]
      * and \psi corresponds to the [PropertySpecification]. The k-bounded state space is encoded by k unrollings of the [timestepTemplate].
      *
      * @param property the properties of [CFGS] to be checked on [timestepTemplate]
@@ -572,10 +587,10 @@ class Encoder(private val CFGS: Parser.CFGS) {
         }*/
 
         /**
-         * Creates timestep specific sub formula from [Transition] it is called on
+         * Creates timestep specific sub-formula from [Transition] it is called on
          *
-         * @param t timestep to create formula for
-         * @return the encoded [CFGS] formula for timestep [t]
+         * @param t timestep to create sub-formula for
+         * @return the encoded [CFGS] sub-formula for timestep [t]
          */
         private infix fun Operation.toFormulaWithTimestamp(t: Int): Formula {
             val assignmentsFormula = mutableListOf<Formula>()
@@ -589,7 +604,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
         }
 
         /**
-         * Replaces i in the string it was called on with [t] and I with ([t] + 1)
+         * Replaces i in the string it is called on with [t] and I with ([t] + 1)
          *
          * @param t base timestep to insert into string
          * @return string with [t] inserted where placeholders were
@@ -599,9 +614,13 @@ class Encoder(private val CFGS: Parser.CFGS) {
         }
 
         /**
-         * Encodes predicate expression "progress" over locations that will be used in liveness checking FG(not(progress))
+         * Encodes predicate expression "progress" over list of locations that will be used in liveness checking FG(not(progress))
+         *
+         * by Definitions 13 and 14 in SCP20
+         *
+         * @return Encoding of predicate expression "progress" in unparsed string format
          */
-        private fun List<Int>.encProgressPredicate(): String {
+        private fun List<Int>.encProgressExpression(): String {
             var progress = ""
             for (pId in this) {
                 progress += property.location.encLocation(pId)
@@ -610,9 +629,9 @@ class Encoder(private val CFGS: Parser.CFGS) {
             return progress.dropLast(3)
         }
         /**
-         * by Definition?
+         * by Definitions 13 and 14 in SCP20
          */
-        private fun encStateRecord(): List<String> {
+        private fun encStateRecording(): ConjunctOver<String> {
             val bigAnd = mutableListOf<String>()
             bigAnd.add("(rd_I <=> (re_i | rd_i))")
             predicates.distinct().forEach {
@@ -620,20 +639,21 @@ class Encoder(private val CFGS: Parser.CFGS) {
                     "(${it.replace("i", "I")}_c <=> (((re_i & ~rd_i) => $it) & (~(re_i & ~rd_i) => ${it}_c)))"
                 )
             }
-            bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${property.processList.encProgressPredicate()})))")
-            return bigAnd
+            bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${property.processList.encProgressExpression()})))")
+            return ConjunctOver(bigAnd)
         }
 
         /**
          * Creates the liveness location encoding of the Int it is called on
-         * by Definition?
+         *
+         * by Definitions 13 and 14 in SCP20
          *
          * @param t timestep formula is to be created for
          * @return [Formula] to conjunct with the encoding of each [Transition] when testing liveness
          */
         private fun Int.livenessEvaluationFormula(t: Int): Formula {
             val bigAnd = mutableListOf<Formula>()
-            encStateRecord().forEach {
+            encStateRecording().conjunctOver.forEach {
                 bigAnd.add(p.parse(it insertTimestamp t))
             }
             if (property.fairnessON) {
@@ -670,8 +690,9 @@ class Encoder(private val CFGS: Parser.CFGS) {
         }
 
         /**
-         * Initializes formula used in [evaluateNoOptimization]
-         * by Definition 11/12?
+         * Initializes formula used in [modelCheckNoOpt]
+         *
+         * see page 45 of SCP19
          *
          * @return initial state of [CFGS], encoded to formula
          */
@@ -710,8 +731,9 @@ class Encoder(private val CFGS: Parser.CFGS) {
         }
 
         /**
-         * Encodes location it is called on as the error location for timestep [t]
-         * by Definition 11/12?
+         * Encodes the location it is called on as a part of the composite error location for timestep [t]
+         *
+         * by Definition 8 in SPC19
          *
          * @param t timestep for which location is deemed as the error location
          * @return formula of error location for timestep [t]
@@ -726,15 +748,16 @@ class Encoder(private val CFGS: Parser.CFGS) {
 
         /**
          * Creates liveness property evaluation formula
-         * by Definition?
          *
-         * Creates the formula that turns formula for [t] of [timestepTemplate] into a satisfiable formula if and only
-         * if liveness is a feature of the [CFGS] (and, if [PropertySpecification.fairnessON], fairness also) for timestep [t]
+         * by Definition 14 in SCP20
          *
-         * @param [t] the timestep liveness is to be checked for
-         * @return liveness property evaluation formula to be added to formula for [t] of [timestepTemplate]
+         * Encodes that a loop has been found at timestep [t] in the state space of [CFGS] that violates liveness
+         * (under fairness if and only if [PropertySpecification.fairnessON])
+         *
+         * @param [t] the timestep at which the loop closes
+         * @return liveness violation property evaluation formula to be added to formula for [t] of [timestepTemplate]
          */
-        private fun livenessProperty(t: Int): Formula {
+        private fun livenessViolationProperty(t: Int): Formula {
             val bigAnd = mutableListOf<Formula>()
             bigAnd.add(p.parse("rd_$t"))
             predicates.forEach { bigAnd.add(p.parse("(${it.insertTimestamp(t)} <=> ${it.insertTimestamp(t)}_c)")) }
@@ -748,12 +771,13 @@ class Encoder(private val CFGS: Parser.CFGS) {
         }
 
         /**
-         * Ascertains the status of the literals re_i and rd_i, after being encoded and sent through the SAT solver
+         * Ascertains the truth value of the variables re_i and rd_i in the SortedSet of literals
+         * it is called on (this Set should be derived from the SAT model)
          *
          * @param [t] used to create the correct instance of re_i and rd_i
-         * @return Pair< statusOf(re_[t]), statusOf(rd_[t]) >
+         * @return Pair<statusOf(re_[t]), statusOf(rd_[t])>
          */
-        private fun SortedSet<Literal>.reRdStatus(t: Int): Pair<String, String> {
+        private fun SortedSet<Literal>.reRdEvaluation(t: Int): Pair<String, String> {
             return Pair(
                 if (this.contains(ff.literal("re_$t", true))) "re = true" else "re = false",
                 if (this.contains(ff.literal("rd_$t", true))) "rd = true" else "rd = false"
@@ -761,12 +785,13 @@ class Encoder(private val CFGS: Parser.CFGS) {
         }
 
         /**
-         * Ascertains the status of each predicate in [CFGS], after being encoded and sent through the SAT solver
+         * For the [t] timestep encoding of each predicate in the [CFGS], ascertain the truth value of said predicate
+         * in the SortedSet of literals it is called on (this Set should be derived from the SAT model)
          *
-         * @param [t] timestep to check predicate statuses
-         * @return list of predicates and their respective statuses
+         * @param [t] timestep to check predicate truth values
+         * @return list of predicates and their respective truth values
          */
-        private fun SortedSet<Literal>.predicateStatus(t: Int): MutableList<String> {
+        private fun SortedSet<Literal>.predicateEvaluation(t: Int): MutableList<String> {
             val predicateStatuses = mutableListOf<String>()
             for(p in CFGS.predicates) {
                 if(this.contains(ff.literal("${p.value}_${t}_u", true))) {
@@ -781,9 +806,13 @@ class Encoder(private val CFGS: Parser.CFGS) {
         }
 
         /**
+         * Ascertains the truth value of the fairness evaluation variable of each process (fr_i_pId)
+         * in the SortedSet of literals it is called on (this Set should be derived from the SAT model)
          *
+         * @param [t] used to create the correct instance of fr_i_pId
+         * @return List of process fairness variable truth values
          */
-        private fun SortedSet<Literal>.fairnessStatus(t: Int): MutableList<String> {
+        private fun SortedSet<Literal>.fairnessEvaluation(t: Int): MutableList<String> {
             val fairnessVariableStatuses = mutableListOf<String>()
             if(!property.fairnessON) {
                 fairnessVariableStatuses.add("n.a.")
@@ -799,7 +828,12 @@ class Encoder(private val CFGS: Parser.CFGS) {
             return fairnessVariableStatuses
         }
 
-        private fun SortedSet<Literal>.locationStatus(t: Int): MutableList<String> {
+        /**
+         * Using the SortedSet of literals it is called on, it derives from the truth values of the location literals, where each process is at timestep [t]
+         * @param [t] timestep to find process locations for
+         * @return list of strings denoting the timestep [t] location of each process
+         */
+        private fun SortedSet<Literal>.locationEvaluation(t: Int): MutableList<String> {
             val processLocations = mutableListOf<String>()
             for ((pId, process) in CFGS.processes.withIndex()) {
                 var processLocation = ""
@@ -821,10 +855,10 @@ class Encoder(private val CFGS: Parser.CFGS) {
                 steps.add(
                     State(
                         k,
-                        this.locationStatus(k),
-                        this.predicateStatus(k),
-                        this.fairnessStatus(k),
-                        this.reRdStatus(k)
+                        this.locationEvaluation(k),
+                        this.predicateEvaluation(k),
+                        this.fairnessEvaluation(k),
+                        this.reRdEvaluation(k)
                     )
                 )
 
@@ -832,6 +866,9 @@ class Encoder(private val CFGS: Parser.CFGS) {
             return steps
         }
 
+        /**
+         * Experimental function
+         */
         private fun pathFormula(steps: MutableList<State>): Formula {
             val bigAnd = mutableListOf<Formula>()
             for((t, step) in steps.withIndex()) {
@@ -911,6 +948,9 @@ class Encoder(private val CFGS: Parser.CFGS) {
             return false
         }*/
 
+        /**
+         * Experimental function
+         */
         private fun Formula.solveAgainWithConstraint(constraint: Formula, startIndex: Int, bound: Int) {
             println("\n=============================================================================")
             println("============= Solving Again with constraint - restarting timer ==============")
@@ -920,7 +960,7 @@ class Encoder(private val CFGS: Parser.CFGS) {
             val startTime = System.nanoTime()
             var formula = ff.and(this, constraint)
             for (t in startIndex until bound + 1) {
-                val property = if (property.type == "liveness") livenessProperty(t) else property.location.errorLocation(t)
+                val property = if (property.type == "liveness") livenessViolationProperty(t) else property.location.errorLocation(t)
                 print(" k(a)=$t")
                 val unitStartTimeA = System.nanoTime()
                 solver.reset()
@@ -953,13 +993,16 @@ class Encoder(private val CFGS: Parser.CFGS) {
             }
         }
 
-        fun evaluateNoOptimization(bound: Int) {
+        /**
+         * SAT-based k-bounded model checking runs from k = 0 to [bound]+1 and no SAT-optimisations activated
+         */
+        fun modelCheckNoOpt(bound: Int) {
             val performanceLog = mutableListOf<Long>()
             val stepResults = mutableListOf<Tristate>()
             val startTime = System.nanoTime()
             var formula = init()
             for (t in 0 until bound + 1) {
-                val propertyFormula = if (property.type == "liveness") livenessProperty(t) else property.location.errorLocation(t)
+                val propertyFormula = if (property.type == "liveness") livenessViolationProperty(t) else property.location.errorLocation(t)
                 print(" k(a)=$t")
                 val unitStartTimeA = System.nanoTime()
                 solver.reset()

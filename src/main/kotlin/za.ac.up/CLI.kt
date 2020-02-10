@@ -1,7 +1,7 @@
 package za.ac.up
 
-import za.ac.up.extensions.Encoder
 import za.ac.up.extensions.Parser
+import za.ac.up.extensions.StateSpaceEncoder
 import java.text.ParseException
 
 //Note: jar build in Tvamcus/build/libs
@@ -19,11 +19,11 @@ object CLI {
         */
         try {
 
-            val model = getModel()
-            val test = getPropertySpecificationOf(model)
-            val encoder = Encoder(model)
-            val ev = encoder.MCTaskBuilder(test)
-            ev.evaluateNoOptimization(getBound())
+            val cfgs = getCFGS()
+            val property = getPropertySpecificationOf(cfgs)
+            val sse = StateSpaceEncoder(cfgs)
+            val ev = sse.MCTaskBuilder(property)
+            ev.modelCheckNoOpt(getBound())
 
         } catch (e: Exception) {
 
@@ -32,14 +32,14 @@ object CLI {
         }
     }
 
-    private fun getModel(): Parser.CFGS {
+    private fun getCFGS(): Parser.CFGS {
         do {
             print("Input file name: ")
             val file = readLine()
             println()
             if(file != null) {
                 try {
-                    val model = Parser.parseFile("/C:/Code/Tuks/Development/Tvamcus/inputFiles/$file.json")
+                    val model = Parser.parseFile("/mnt/c/Users/Josua  Botha/Development/Tvamcus/inputFiles/$file.json")
                     println("...parsed")
                     try {
                         return model
@@ -57,7 +57,7 @@ object CLI {
         } while (true)
     }
 
-    private fun getPropertySpecificationOf(model: Parser.CFGS): Encoder.PropertySpecification {
+    private fun getPropertySpecificationOf(model: Parser.CFGS): StateSpaceEncoder.PropertySpecification {
 
         print("\nDouble Test? (y/n): ")
         val dt = readLine()
@@ -90,7 +90,7 @@ object CLI {
                                     "&" // since only only one process in list, any operator will do, so user does not need to select one
                                 }
                                 if(operator != null && (operator == "|" || operator == "&")) {
-                                    return Encoder.PropertySpecification("liveness", pLoc.toInt(), processList, operator, fairnessOn, doubleTest)
+                                    return StateSpaceEncoder.PropertySpecification("liveness", pLoc.toInt(), processList, operator, fairnessOn, doubleTest)
                                 } else {
                                     println("Please try again, note '|' -> 'or' but '&' -> 'and'. Please type out the symbols themselves.")
                                 }
@@ -124,7 +124,7 @@ object CLI {
                             "&" // since only only one process in list, any operator will do, so user does not need to select one
                         }
                         if (operator != null && (operator == "|" || operator == "&")) {
-                            return Encoder.PropertySpecification("reachability", eLoc.toInt(), processList, operator, doubleTest = doubleTest)
+                            return StateSpaceEncoder.PropertySpecification("reachability", eLoc.toInt(), processList, operator, doubleTest = doubleTest)
                         } else {
                             println("Please try again, note:\n'|' -> 'or' but '&' -> 'and'. Please type out the symbols themselves.")
                         }
