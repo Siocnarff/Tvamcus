@@ -1,5 +1,6 @@
-package za.ac.up.extensions
+package za.ac.up.tvamcus.parser
 
+import za.ac.up.tvamcus.state.cfgs.*
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import com.google.gson.stream.JsonReader
@@ -8,72 +9,14 @@ import com.google.gson.reflect.TypeToken
 import java.io.File
 
 object Parser {
-    data class CFGS (
-        val predicates: Map<String, Int>,
-        val init: Map<String, Boolean>,
-        val processes: List<Process>
-    )
-
     private var predicates: MutableMap<String, Int> = mutableMapOf()
     private var init: MutableMap<String, Boolean> = mutableMapOf()
     private val processes: MutableList<Process> = mutableListOf()
 
-    data class Process (
-        val id: Int,
-        val transitions: MutableList<Transition>
-    )
-    data class Transition (
-        val source: Int,
-        val destination: Int,
-        val assignments: List<Assignment>,
-        var guard: String
-    )
-    data class Assignment (
-        var RHS: String,
-        val predicate: Int
-    )
-
-    val jsonStructureExample: String = """
-            NOTE
-            The file Json should conform to the following structure:
-
-            {
-              "predicates": {
-                "(a = -1)": 0
-              },
-              "processes": [
-                {
-                  "states": [
-                    {
-                      "transitions": [
-                        {
-                          "source": 2,
-                          "destination": 3,
-                          "assignments": [
-                            {
-                              "RHS": "choice(false, true)",
-                              "predicate": 0
-                            }
-                          ],
-                          "guard": "choice((a = -1), (not (a = -1)))"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }      
-        """.trimIndent()
-    private fun exceptionMessages ( message: String, localizedMessage: String ) {
-        println(message)
-        println(localizedMessage.drop(localizedMessage.indexOf(':') + 2))
-        println('\n' + jsonStructureExample)
-    }
-
     private fun standardize(guard: String?): String {
         if (guard == null) {
             return "${'$'}true"
-        } // else
+        }
         var standardGuard = ""
         var tempNot = ""
         var tempOr = ""
@@ -150,7 +93,7 @@ object Parser {
 
     fun parseFile (filePath: String): CFGS {
         val builder = GsonBuilder()
-        val gson = builder.create()
+        val g = builder.create()
         val fileBuffer = File(filePath).bufferedReader()
         val jsonReader = JsonReader(fileBuffer)
         val parser = JsonParser()
@@ -160,19 +103,24 @@ object Parser {
         val processesJson: JsonElement = rootNode.asJsonObject.get("processes")
         val typeA = object : TypeToken<MutableMap<String, Int>>() {}.type
         val typeB = object : TypeToken<MutableMap<String, Boolean>>() {}.type
-        predicates = gson.fromJson(predicatesJson, typeA)
-        init = gson.fromJson(initJson, typeB)
-
+        predicates = g.fromJson(predicatesJson, typeA)
+        init = g.fromJson(initJson, typeB)
         for ((idCounter, process) in processesJson.asJsonArray.withIndex()) {
-            processes.add(Process(id = idCounter, transitions = mutableListOf()))
+            processes.add(
+                Process(
+                    id = idCounter,
+                    transitions = mutableListOf()
+                )
+            )
             for (node in process.asJsonObject.get("states").asJsonArray) {
                 for (transition in node.asJsonObject.get("transitions").asJsonArray) {
                     processes[idCounter].transitions.add(
-                        gson.fromJson(transition, Transition::class.java)
+                        g.fromJson(transition, CfgsTransition::class.java)
                     )
-                    processes[idCounter].transitions.last().guard = standardize(
-                        processes[idCounter].transitions.last().guard
-                    )
+                    processes[idCounter].transitions.last().guard =
+                        standardize(
+                            processes[idCounter].transitions.last().guard
+                        )
                     processes[idCounter].transitions.last().assignments.forEach {
                         it.RHS = standardize(it.RHS)
                     }

@@ -1,7 +1,9 @@
-package za.ac.up
+package za.ac.up.tvamcus.view
 
-import za.ac.up.extensions.Parser
-import za.ac.up.extensions.StateSpaceEncoder
+import za.ac.up.tvamcus.parser.Parser
+import za.ac.up.tvamcus.parameters.PropertySpecification
+import za.ac.up.tvamcus.state.cfgs.CFGS
+import za.ac.up.tvamcus.runner.Runner
 import java.text.ParseException
 
 //Note: jar build in Tvamcus/build/libs
@@ -18,11 +20,9 @@ object CLI {
         val startTime = System.nanoTime()
         */
         try {
-
             val cfgs = getCFGS()
             val property = getPropertySpecificationOf(cfgs)
-            val sse = StateSpaceEncoder(cfgs)
-            val ev = sse.MCTaskBuilder(property)
+            val ev = Runner(property, cfgs)
             ev.modelCheckNoOpt(getBound())
 
         } catch (e: Exception) {
@@ -32,7 +32,7 @@ object CLI {
         }
     }
 
-    private fun getCFGS(): Parser.CFGS {
+    private fun getCFGS(): CFGS {
         do {
             print("Input file name: ")
             val file = readLine()
@@ -57,7 +57,7 @@ object CLI {
         } while (true)
     }
 
-    private fun getPropertySpecificationOf(model: Parser.CFGS): StateSpaceEncoder.PropertySpecification {
+    private fun getPropertySpecificationOf(model: CFGS): PropertySpecification {
 
         print("\nDouble Test? (y/n): ")
         val dt = readLine()
@@ -90,7 +90,7 @@ object CLI {
                                     "&" // since only only one process in list, any operator will do, so user does not need to select one
                                 }
                                 if(operator != null && (operator == "|" || operator == "&")) {
-                                    return StateSpaceEncoder.PropertySpecification("liveness", pLoc.toInt(), processList, operator, fairnessOn, doubleTest)
+                                    return PropertySpecification("liveness", pLoc.toInt(), processList, operator, fairnessOn, doubleTest)
                                 } else {
                                     println("Please try again, note '|' -> 'or' but '&' -> 'and'. Please type out the symbols themselves.")
                                 }
@@ -124,7 +124,7 @@ object CLI {
                             "&" // since only only one process in list, any operator will do, so user does not need to select one
                         }
                         if (operator != null && (operator == "|" || operator == "&")) {
-                            return StateSpaceEncoder.PropertySpecification("reachability", eLoc.toInt(), processList, operator, doubleTest = doubleTest)
+                            return PropertySpecification("reachability", eLoc.toInt(), processList, operator, doubleTest = doubleTest)
                         } else {
                             println("Please try again, note:\n'|' -> 'or' but '&' -> 'and'. Please type out the symbols themselves.")
                         }
@@ -153,7 +153,7 @@ object CLI {
         } while (true)
     }
 
-    private fun String.extractCSList(model: Parser.CFGS): MutableList<Int> {
+    private fun String.extractCSList(model: CFGS): MutableList<Int> {
         var listTrimmed = this.dropLastWhile { it == ')' }.dropWhile { it == '(' }
         val list = mutableListOf<Int>()
         if (listTrimmed.decapitalize() == "all" || listTrimmed.decapitalize() == "a") {
