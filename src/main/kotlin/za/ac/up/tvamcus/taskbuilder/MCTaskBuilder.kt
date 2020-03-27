@@ -5,7 +5,7 @@ import za.ac.up.tvamcus.encoders.*
 import za.ac.up.tvamcus.logicng.conjunct
 import za.ac.up.tvamcus.logicng.disjoin
 import za.ac.up.tvamcus.logicng.parse
-import za.ac.up.tvamcus.parameters.PropertySpecification
+import za.ac.up.tvamcus.property.PropertySpecification
 import za.ac.up.tvamcus.sets.ConjunctiveSet
 import za.ac.up.tvamcus.sets.DisjunctiveSet
 import za.ac.up.tvamcus.state.cfgs.CFGS
@@ -48,7 +48,7 @@ class MCTaskBuilder(propertySpecification: PropertySpecification, controlFlowGra
             if (propertySpec.type == "liveness") {
                 over.add(parse("~rd_0 & ~lv_0"))
                 over.add(parse(cfgs.encLocationCopy(pId, lId = 0, t = "0")))
-                if(propertySpec.fairnessON) {
+                if(propertySpec.fairnessOn) {
                     over.add(parse("~fr_0_${pId}"))
                 }
             }
@@ -128,7 +128,7 @@ class MCTaskBuilder(propertySpecification: PropertySpecification, controlFlowGra
      */
     private fun livenessEvaluationFormula(lId: Int, timestep: Int): Formula {
         val conjunctiveSet = encStateRecording()
-        return if(!propertySpec.fairnessON) {
+        return if(!propertySpec.fairnessOn) {
             conjunctiveSet.asConjunctiveFormula(timestep)
         } else {
             conjunct(
@@ -203,7 +203,7 @@ class MCTaskBuilder(propertySpecification: PropertySpecification, controlFlowGra
         for (pId in propertySpec.processList) {
             toJoin.add(parse(cfgs.encLocation(pId, lId, timestep.toString())))
         }
-        return if (propertySpec.operator == "|") disjoin(toJoin) else conjunct(toJoin)
+        return if (propertySpec.operator == '|') disjoin(toJoin) else conjunct(toJoin)
     }
 
     /**
@@ -212,7 +212,7 @@ class MCTaskBuilder(propertySpecification: PropertySpecification, controlFlowGra
      * by Definition 14 in SCP20
      *
      * Encodes that a loop has been found at timestep [timestep]] in the state space of [cfgs] that violates liveness
-     * (under fairness if and only if [PropertySpecification.fairnessON])
+     * (under fairness if and only if [PropertySpecification.fairnessOn])
      *
      * @param [timestep] the timestep at which the loop closes
      * @return liveness violation property evaluation formula to
@@ -225,7 +225,7 @@ class MCTaskBuilder(propertySpecification: PropertySpecification, controlFlowGra
             bigAnd.add(parse("(${it.insertTimestep(timestep)} <=> ${it.insertTimestep(timestep)}_c)"))
         }
         bigAnd.add(parse("~lv_$timestep"))
-        if(propertySpec.fairnessON) {
+        if(propertySpec.fairnessOn) {
             for(pId in cfgs.processes.indices) {
                 bigAnd.add(parse("fr_${timestep}_$pId"))
             }

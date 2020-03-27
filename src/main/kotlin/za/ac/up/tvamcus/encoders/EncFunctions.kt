@@ -434,3 +434,177 @@ fun encIsTrueCopy(predicateId: Int, t: String = "I"): String {
 fun encIsTrue(predicateId: Int, t: String = "I"): String {
     return "(~${predicateId}_${t}_u & ${predicateId}_${t}_t)"
 }
+
+/*
+package za.ac.up.tvamcus.view
+
+import za.ac.up.tvamcus.parser.Parser
+import za.ac.up.tvamcus.property.PropertySpecification
+import za.ac.up.tvamcus.state.cfgs.CFGS
+import za.ac.up.tvamcus.evaluator.Evaluator
+import java.text.ParseException
+
+object CLILegacy {
+    @JvmStatic
+    fun main(args: Array<String>) {
+        try {
+            val cfgs = getCFGS()
+            val property = getPropertySpecificationOf(cfgs)
+            val ev = Evaluator(property, cfgs)
+            ev.evaluateUniModel(getBound())
+        } catch (e: Exception) {
+
+            println(e.localizedMessage)
+
+        }
+    }
+
+    private fun getAllCFGS(multiModel: Boolean) {
+        val cfgs = mutableListOf<CFGS>()
+        println("All Predicates Version: ")
+        cfgs.add(getCFGS())
+        if(multiModel) {
+            println("No Predicates Version:")
+            cfgs.add(getCFGS())
+        }
+    }
+
+    private fun getCFGS(): CFGS {
+        do {
+            print("Input file name: ")
+            val file = readLine()
+            println()
+            if(file != null) {
+                try {
+                    val model = Parser.parseFile("/mnt/c/Users/josuabotha/Development/Tvamcus/inputFiles/$file.json")
+                    println("...parsed")
+                    try {
+                        return model
+                    } catch (e: ParseException) {
+                        println("Model cannot be encoded.")
+                        println("Please ensure that the json file follows the required specifications.")
+                    }
+                } catch (e: Exception) {
+                    println(e.localizedMessage)
+                }
+            } else {
+                println("no file location specified")
+            }
+            println("...please try again")
+        } while (true)
+    }
+
+    private fun getPropertySpecificationOf(model: CFGS): PropertySpecification {
+
+        print("\nMulti Model Approach? (y/n): ")
+        val dt = readLine()
+        val doubleTest = !(dt == null || dt.decapitalize().contains('n'))
+
+        print("Liveness or Reachability? (l/r): ")
+        val type = readLine()
+        if(type?.decapitalize() == "l" || type?.decapitalize() ==  "liveness") {
+            do {
+                print("With Fairness? (y/n): ")
+                val answer = readLine()
+                if(answer != null) {
+                    val fairnessOn = (answer.decapitalize() == "y")
+                    do {
+                        print("Progress Location: ")
+                        val pLoc = readLine()
+                        if(pLoc != null && pLoc.toInt() >= 0) {
+                            print("Processes to Consider - as list (i.e. 0,7,3,2) or type 'a' for all: ")
+                            val processCSList = readLine()
+                            if(processCSList != null) {
+                                val processList = if (processCSList.decapitalize().contains('a')) {
+                                    model.processes.indices.toMutableList()
+                                } else {
+                                    processCSList.extractCSList(model)
+                                }
+                                val operator = if(processList.size != 1) {
+                                    print("Operator (&/|): ")
+                                    readLine()
+                                } else {
+                                    "&" // since only only one process in list, any operator will do, so user does not need to select one
+                                }
+                                if(operator != null && (operator == "|" || operator == "&")) {
+                                    return PropertySpecification("liveness", pLoc.toInt(), processList, operator, fairnessOn, doubleTest)
+                                } else {
+                                    println("Please try again, note '|' -> 'or' but '&' -> 'and'. Please type out the symbols themselves.")
+                                }
+                            } else {
+                                print("Please try again - ")
+                            }
+                        } else {
+                            println("Formula must be sound and in unparsed string format.")
+                            print("Please try again - ")
+                        }
+                    } while(true)
+                }
+            } while (true)
+        } else {
+            do {
+                print("Error Location: ")
+                val eLoc = readLine()
+                if(eLoc != null && eLoc.toInt() >= 0) {
+                    print("Processes to Consider - as list (i.e. 0,7,3,2) or type 'a' for all: ")
+                    val processCSList = readLine()
+                    if(processCSList != null) {
+                        val processList = if (processCSList.decapitalize().contains('a')) {
+                            model.processes.indices.toMutableList()
+                        } else {
+                            processCSList.extractCSList(model)
+                        }
+                        val operator = if(processList.size != 1) {
+                            print("Operator (&/|): ")
+                            readLine()
+                        } else {
+                            "&" // since only only one process in list, any operator will do, so user does not need to select one
+                        }
+                        if (operator != null && (operator == "|" || operator == "&")) {
+                            return PropertySpecification("reachability", eLoc.toInt(), processList, operator, doubleTest)
+                        } else {
+                            println("Please try again, note:\n'|' -> 'or' but '&' -> 'and'. Please type out the symbols themselves.")
+                        }
+                    } else {
+                        print("Please try again - ")
+                    }
+                } else {
+                    println("Error Location has to be a non-negative integer.")
+                    print("Please try again - ")
+                }
+            } while(true)
+        }
+    }
+
+    private fun getBound(): Int {
+        do {
+            print("Upper Bound: ")
+            val bound = readLine()
+            if(bound != null && bound.toInt() > 0) {
+                println()
+                return bound.toInt()
+            } else {
+                println("Bound has to be a non-negative integer.")
+                print("Please try again - ")
+            }
+        } while (true)
+    }
+
+    private fun String.extractCSList(model: CFGS): MutableList<Int> {
+        var listTrimmed = this.dropLastWhile { it == ')' }.dropWhile { it == '(' }
+        val list = mutableListOf<Int>()
+        if (listTrimmed.decapitalize() == "all" || listTrimmed.decapitalize() == "a") {
+            for (pId in model.processes.indices) {
+                list.add(pId)
+            }
+        } else {
+            while (listTrimmed.contains(',')) {
+                list.add(listTrimmed.substringBefore(',').trim().toInt())
+                listTrimmed = listTrimmed.substringAfter(',').trim()
+            }
+            list.add(listTrimmed.toInt())
+        }
+        return list
+    }
+}
+ */
