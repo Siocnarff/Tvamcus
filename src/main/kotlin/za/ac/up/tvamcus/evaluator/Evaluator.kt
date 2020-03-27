@@ -5,6 +5,9 @@ import org.logicng.datastructures.Tristate
 import org.logicng.formulas.Formula
 import org.logicng.formulas.Literal
 import za.ac.up.tvamcus.encoders.*
+import za.ac.up.tvamcus.formulafactory.conjunct
+import za.ac.up.tvamcus.formulafactory.disjoin
+import za.ac.up.tvamcus.formulafactory.parse
 import za.ac.up.tvamcus.logbook.TimeLog
 import za.ac.up.tvamcus.print.printNoErrorFound
 import za.ac.up.tvamcus.print.printSatisfiable
@@ -468,36 +471,12 @@ class Evaluator(propertySpecification: PropertySpecification, controlFlowGraphSt
         return tally
     }
 
-    private fun parse(f: String): Formula {
-        return Ff.p.parse(f)
-    }
-
-    private fun conjunct(formulas: MutableCollection<Formula>): Formula {
-        return Ff.ff.and(formulas)
-    }
-
-    private fun conjunct(vararg v: Formula): Formula {
-        val formulas = mutableListOf<Formula>()
-        formulas.addAll(v)
-        return Ff.ff.and(formulas)
-    }
-
-    private fun disjoin(formulas: MutableCollection<Formula>): Formula {
-        return Ff.ff.or(formulas)
-    }
-
-    private fun disjoin(vararg v: Formula): Formula {
-       val formulas = mutableListOf<Formula>()
-        formulas.addAll(v)
-        return Ff.ff.or(formulas)
-    }
-    
-    private fun evaluationResultLiterals(): SortedSet<Literal> {
-        return Ff.solver.model().literals()
-    }
-
     private fun resultPathInfo(t: Int): MutableList<State> {
         return evaluationResultLiterals().pathInfo(t)
+    }
+
+    private fun evaluationResultLiterals(): SortedSet<Literal> {
+        return Ff.solver.model().literals()
     }
 
     private fun MutableList<State>.print() {
