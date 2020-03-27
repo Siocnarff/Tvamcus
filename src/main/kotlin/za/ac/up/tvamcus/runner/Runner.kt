@@ -7,6 +7,7 @@ import org.logicng.formulas.Literal
 import org.logicng.io.parsers.PropositionalParser
 import org.logicng.solvers.MiniSat
 import za.ac.up.tvamcus.encoders.*
+import za.ac.up.tvamcus.logbook.TimeLog
 import za.ac.up.tvamcus.print.printNoErrorFound
 import za.ac.up.tvamcus.print.printSatisfiable
 import za.ac.up.tvamcus.print.printState
@@ -30,66 +31,68 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
      * SAT-based k-bounded model checking runs from k = 0 to [bound]+1 and no SAT-optimisations activated
      */
     fun modelCheckNoOpt(bound: Int) {
-        val performanceLog = mutableListOf<Long>()
         val stepResults = mutableListOf<Tristate>()
-        val startTime = System.nanoTime()
-        var formula = init()
+        val timestepCfgsFormulas = mutableListOf<Formula>()
+        val timeLog = TimeLog()
+
+        timestepCfgsFormulas.add(init())
         for (t in 0 until bound + 1) {
             val propertyFormula = if (propertySpec.type == "liveness") livenessViolationProperty(t) else errorLocation(propertySpec.location, t)
             print(" k(a)=$t")
-            val unitStartTimeA = System.nanoTime()
-            solver.reset()
-            solver.add(ff.and(formula, propertyFormula, p.parse("unknown")))
-            stepResults.add(solver.sat())
-            performanceLog.add(System.nanoTime() - unitStartTimeA)
+            timeLog.startLap()
+            stepResults.add(
+                timestepCfgsFormulas.evaluateLatestConjunctedWith(property = propertyFormula, literal = "unknown")
+            )
+            timeLog.endLap()
             printState(
-                performanceLog.last(),
+                timeLog.lastLapTime(),
                 stepResults.last().toString()
             )
             if (stepResults.last() == Tristate.TRUE) {
                 val pathInfo = solver.model().literals().pathInfo(t)
                 print(" k(b)=$t")
-                val unitStartTimeB = System.nanoTime()
-                solver.reset()
-                solver.add(
-                    ff.and(formula, propertyFormula, p.parse("~unknown")))
-                stepResults.add(solver.sat())
-                performanceLog.add(System.nanoTime() - unitStartTimeB)
+                timeLog.startLap()
+                stepResults.add(
+                    timestepCfgsFormulas.evaluateLatestConjunctedWith(property = propertyFormula, literal = "~unknown")
+                )
+                timeLog.endLap()
                 printState(
-                    performanceLog.last(),
+                    timeLog.lastLapTime(),
                     stepResults.last().toString()
                 )
                 if (stepResults.last() == Tristate.TRUE) {
-                    val time = System.nanoTime()
                     println("\nError Path")
                     solver.model().literals().pathInfo(t).print()
                     printSatisfiable(
-                        startT = startTime,
-                        endT = time,
+                        time =timeLog.totalTime(),
                         timestep = t
                     )
                     if(propertySpec.doubleTest) {
-                        formula.solveAgainWithConstraint(pathFormula(solver.model().literals().pathInfo(t)), t, bound)
+                        timestepCfgsFormulas.last().solveAgainWithConstraint(pathFormula(solver.model().literals().pathInfo(t)), t, bound)
                     }
                 } else {
-                    val time = System.nanoTime()
                     pathInfo.print()
                     printUnknown(
-                        startT = startTime,
-                        endT = time,
+                        time = timeLog.totalTime(),
                         timestep = t
                     )
                     if(propertySpec.doubleTest) {
-                        formula.solveAgainWithConstraint(pathFormula(pathInfo), t, bound)
+                        timestepCfgsFormulas.last().solveAgainWithConstraint(pathFormula(pathInfo), t, bound)
                     }
 
                 }
-
                 return
             }
-            formula = ff.and(formula, transitionSetAsFormula(t))
+            timestepCfgsFormulas.add(ff.and(timestepCfgsFormulas.last(), transitionSetAsFormula(t)))
         }
-        printNoErrorFound(startTime, System.nanoTime(), bound)
+        timeLog.endLap()
+        printNoErrorFound(timeLog.totalTime(), bound)
+    }
+
+    private fun MutableList<Formula>.evaluateLatestConjunctedWith(property: Formula, literal: String): Tristate {
+        solver.reset()
+        solver.add(ff.and(this.last(), property, p.parse(literal)))
+        return solver.sat()
     }
 
     /**
@@ -99,56 +102,51 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
         println("\n=============================================================================")
         println("============= Solving Again with constraint - restarting timer ==============")
         println("=============================================================================\n")
-        val performanceLog = mutableListOf<Long>()
         val stepResults = mutableListOf<Tristate>()
-        val startTime = System.nanoTime()
-        var formula = ff.and(this, constraint)
+        val timeLog = TimeLog()
+        val formulas = mutableListOf<Formula>()
+        formulas.add(ff.and(this, constraint))
         for (t in startIndex until bound + 1) {
-            val property = if (propertySpec.type == "liveness") livenessViolationProperty(t) else errorLocation(propertySpec.location, t)
+            val propertyFormula = if (propertySpec.type == "liveness") livenessViolationProperty(t) else errorLocation(propertySpec.location, t)
             print(" k(a)=$t")
-            val unitStartTimeA = System.nanoTime()
-            solver.reset()
-            solver.add(ff.and(formula, property, p.parse("unknown")))
-            stepResults.add(solver.sat())
-            performanceLog.add(System.nanoTime() - unitStartTimeA)
+            timeLog.startLap()
+            stepResults.add(
+                formulas.evaluateLatestConjunctedWith(property = propertyFormula, literal = "unknown")
+            )
+            timeLog.endLap()
             printState(
-                performanceLog.last(),
+                timeLog.lastLapTime(),
                 stepResults.last().toString()
             )
             if (stepResults.last() == Tristate.TRUE) {
                 val pathInfo = solver.model().literals().pathInfo(t)
                 print(" k(b)=$t")
-                val unitStartTimeB = System.nanoTime()
-                solver.reset()
-                solver.add(
-                    ff.and(formula, property, p.parse("~unknown")))
-                stepResults.add(solver.sat())
-                performanceLog.add(System.nanoTime() - unitStartTimeB)
+                timeLog.startLap()
+                stepResults.add(
+                    formulas.evaluateLatestConjunctedWith(property = propertyFormula, literal = "~unknown")
+                )
+                timeLog.endLap()
                 printState(
-                    performanceLog.last(),
+                    timeLog.lastLapTime(),
                     stepResults.last().toString()
                 )
                 if (stepResults.last() == Tristate.TRUE) {
-                    val time = System.nanoTime()
                     println("\nError Path")
                     solver.model().literals().pathInfo(t).print()
                     printSatisfiable(
-                        startT = startTime,
-                        endT = time,
+                        timeLog.lastLapTime(),
                         timestep = t
                     )
                 } else {
-                    val time = System.nanoTime()
                     pathInfo.print()
                     printUnknown(
-                        startT = startTime,
-                        endT = time,
+                        timeLog.lastLapTime(),
                         timestep = t
                     )
                 }
                 return
             }
-            formula = ff.and(formula, transitionSetAsFormula(timestep = t))
+            formulas.add(ff.and(formulas.last(), transitionSetAsFormula(timestep = t)))
         }
     }
 
@@ -219,11 +217,13 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
             )
         }
     }
+
     private fun ConjunctiveSet<String>.asConjunctiveFormula(timestep: Int): Formula {
         val bigAnd = mutableSetOf<Formula>()
         conjunctOver.forEach{ bigAnd.add(it.asFormula(timestep)) }
         return ff.and(bigAnd)
     }
+
     private fun fairnessConstraintFormula(lId: Int, timestep: Int): Formula {
         val bigAnd = mutableSetOf<Formula>()
         bigAnd.add("(fr_I_${lId} <=> (re_i | rd_i))".asFormula(timestep))
