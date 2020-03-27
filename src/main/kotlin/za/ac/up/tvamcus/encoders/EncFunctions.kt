@@ -1,6 +1,6 @@
 package za.ac.up.tvamcus.encoders
 
-import za.ac.up.tvamcus.formulafactory.parse
+import za.ac.up.tvamcus.logicng.parse
 import za.ac.up.tvamcus.sets.ConjunctiveSet
 import za.ac.up.tvamcus.sets.DisjunctiveSet
 import za.ac.up.tvamcus.state.encoded.*

@@ -4,9 +4,9 @@ import org.logicng.formulas.Formula
 import za.ac.up.tvamcus.encoders.deriveEncodedPredicates
 import za.ac.up.tvamcus.encoders.encLocation
 import za.ac.up.tvamcus.encoders.encodeAsTemplateTransitionSet
-import za.ac.up.tvamcus.formulafactory.conjunct
-import za.ac.up.tvamcus.formulafactory.disjoin
-import za.ac.up.tvamcus.formulafactory.parse
+import za.ac.up.tvamcus.logicng.conjunct
+import za.ac.up.tvamcus.logicng.disjoin
+import za.ac.up.tvamcus.logicng.parse
 import za.ac.up.tvamcus.parameters.PropertySpecification
 import za.ac.up.tvamcus.sets.ConjunctiveSet
 import za.ac.up.tvamcus.sets.DisjunctiveSet

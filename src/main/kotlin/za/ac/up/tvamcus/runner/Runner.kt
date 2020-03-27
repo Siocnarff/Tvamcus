@@ -1,13 +1,13 @@
 package za.ac.up.tvamcus.runner
 
-import za.ac.up.tvamcus.formulafactory.Ff
+import za.ac.up.tvamcus.logicng.LogicNG
 import org.logicng.datastructures.Tristate
 import org.logicng.formulas.Formula
 import org.logicng.formulas.Literal
 import za.ac.up.tvamcus.taskbuilder.MCTaskBuilder
 import za.ac.up.tvamcus.encoders.*
-import za.ac.up.tvamcus.formulafactory.conjunct
-import za.ac.up.tvamcus.formulafactory.parse
+import za.ac.up.tvamcus.logicng.conjunct
+import za.ac.up.tvamcus.logicng.parse
 import za.ac.up.tvamcus.logbook.TimeLog
 import za.ac.up.tvamcus.print.printNoErrorFound
 import za.ac.up.tvamcus.print.printSatisfiable
@@ -116,9 +116,9 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
     }
 
     private fun MutableList<Formula>.evaluateLatestConjunctedWith(property: Formula, literal: String): Tristate {
-        Ff.solver.reset()
-        Ff.solver.add(conjunct(this.last(), property, parse(literal)))
-        return Ff.solver.sat()
+        LogicNG.solver.reset()
+        LogicNG.solver.add(conjunct(this.last(), property, parse(literal)))
+        return LogicNG.solver.sat()
     }
 
     /**
@@ -175,8 +175,8 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
      */
     private fun SortedSet<Literal>.reRdEvaluation(timestep: Int): Pair<String, String> {
         return Pair(
-            if (this.contains(Ff.ff.literal("re_$timestep", true))) "re = true" else "re = false",
-            if (this.contains(Ff.ff.literal("rd_$timestep", true))) "rd = true" else "rd = false"
+            if (this.contains(LogicNG.ff.literal("re_$timestep", true))) "re = true" else "re = false",
+            if (this.contains(LogicNG.ff.literal("rd_$timestep", true))) "rd = true" else "rd = false"
         )
     }
 
@@ -190,9 +190,9 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
     private fun SortedSet<Literal>.predicateEvaluation(timestep: Int): MutableList<String> {
         val predicateStatuses = mutableListOf<String>()
         for(p in cfgs.predicates) {
-            if(this.contains(Ff.ff.literal("${p.value}_${timestep}_u", true))) {
+            if(this.contains(LogicNG.ff.literal("${p.value}_${timestep}_u", true))) {
                 predicateStatuses.add("${p.key} = unknown")
-            } else if(this.contains(Ff.ff.literal("${p.value}_${timestep}_t", true))) {
+            } else if(this.contains(LogicNG.ff.literal("${p.value}_${timestep}_t", true))) {
                 predicateStatuses.add("${p.key} = true")
             } else {
                 predicateStatuses.add("${p.key} = false")
@@ -215,7 +215,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
             return fairnessVariableStatuses
         }
         for(pId in cfgs.processes.indices) {
-            if(this.contains(Ff.ff.literal("fr_${timestep}_${pId}", true))) {
+            if(this.contains(LogicNG.ff.literal("fr_${timestep}_${pId}", true))) {
                 fairnessVariableStatuses.add("P$pId = fair")
             } else {
                 fairnessVariableStatuses.add("P$pId = unfair")
@@ -234,7 +234,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
         for ((pId, process) in cfgs.processes.withIndex()) {
             var processLocation = ""
             for(d in 0 until digitRequired(process.numberOfLocations())) {
-                processLocation += if(this.contains(Ff.ff.literal("n_${timestep}_${pId}_${d}", false))) {
+                processLocation += if(this.contains(LogicNG.ff.literal("n_${timestep}_${pId}_${d}", false))) {
                     "0"
                 } else {
                     "1"
@@ -302,7 +302,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
     }
 
     private fun evaluationResultLiterals(): SortedSet<Literal> {
-        return Ff.solver.model().literals()
+        return LogicNG.solver.model().literals()
     }
 
     private fun MutableList<State>.print() {
