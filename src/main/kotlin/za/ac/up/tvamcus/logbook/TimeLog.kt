@@ -17,6 +17,10 @@ class TimeLog(
         return lapTimes.last()
     }
     fun totalTime(): Long {
-        return endTimes.last() - startTime
+        return if(endTimes.isNotEmpty()) {
+            endTimes.last() - startTime
+        } else {
+            System.nanoTime() - startTime
+        }
     }
 }

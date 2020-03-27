@@ -18,7 +18,6 @@ import za.ac.up.tvamcus.state.cfgs.*
 import java.util.*
 import kotlin.math.pow
 
-
 class Runner(propertySpecification: PropertySpecification, controlFlowGraphState: CFGS) {
     private val cfgs: CFGS = controlFlowGraphState
     private val propertySpec: PropertySpecification = propertySpecification
@@ -32,13 +31,13 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
         val timestepCfgsFormulas = mutableListOf<Formula>()
         val timeLog = TimeLog()
 
-        timestepCfgsFormulas.add(taskBuilder.init)
+        timestepCfgsFormulas.add(taskBuilder.initialState)
         for (t in 0 until bound + 1) {
             val propertyFormula = taskBuilder.propertyFormula(t)
             print(" k(a)=$t")
             timeLog.startLap()
             stepResults.add(
-                timestepCfgsFormulas.evaluateLatestConjunctedWith(property = propertyFormula, literal = "unknown")
+                timestepCfgsFormulas.evaluateConjunctedWith(property = propertyFormula, literal = "unknown")
             )
             timeLog.endLap()
             printState(timeLog.lastLapTime(), stepResults.last().toString())
@@ -47,7 +46,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
                 print(" k(b)=$t")
                 timeLog.startLap()
                 stepResults.add(
-                    timestepCfgsFormulas.evaluateLatestConjunctedWith(property = propertyFormula, literal = "~unknown")
+                    timestepCfgsFormulas.evaluateConjunctedWith(property = propertyFormula, literal = "~unknown")
                 )
                 timeLog.endLap()
                 printState(timeLog.lastLapTime(), stepResults.last().toString())
@@ -76,9 +75,33 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
         printNoErrorFound(timeLog.totalTime(), bound)
     }
 
-    private fun MutableList<Formula>.evaluateLatestConjunctedWith(property: Formula, literal: String): Tristate {
+    fun basicModelCheck(bound: Int) {
+        val formulas = mutableListOf<Formula>()
+        formulas.add(taskBuilder.initialState)
+        val timeLog = TimeLog()
+
+        for (t in 0 until bound + 1) {
+            val propertyFormula = taskBuilder.propertyFormula(t)
+            if (formulas.evaluateConjunctedWith(propertyFormula, literal = "unknown") == Tristate.TRUE) {
+                val pathInfo = resultPathInfo(t)
+                if (formulas.evaluateConjunctedWith(propertyFormula, literal = "~unknown") == Tristate.TRUE) {
+                    println("\nError Path")
+                    resultPathInfo(t).print()
+                    printSatisfiable(timeLog.totalTime(), t)
+                } else {
+                    pathInfo.print()
+                    printUnknown(timeLog.totalTime(), t)
+                }
+                return
+            }
+            formulas.add(taskBuilder.cfgAsFormula(t))
+        }
+        printNoErrorFound(timeLog.totalTime(), bound)
+    }
+
+    private fun MutableList<Formula>.evaluateConjunctedWith(property: Formula, literal: String): Tristate {
         LogicNG.solver.reset()
-        LogicNG.solver.add(conjunct(this.last(), property, parse(literal)))
+        LogicNG.solver.add(conjunct(conjunct(this), property, parse(literal)))
         return LogicNG.solver.sat()
     }
 
@@ -98,7 +121,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
             print(" k(a)=$t")
             timeLog.startLap()
             stepResults.add(
-                formulas.evaluateLatestConjunctedWith(property = propertyFormula, literal = "unknown")
+                formulas.evaluateConjunctedWith(property = propertyFormula, literal = "unknown")
             )
             timeLog.endLap()
             printState(timeLog.lastLapTime(), stepResults.last().toString())
@@ -107,7 +130,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
                 print(" k(b)=$t")
                 timeLog.startLap()
                 stepResults.add(
-                    formulas.evaluateLatestConjunctedWith(property = propertyFormula, literal = "~unknown")
+                    formulas.evaluateConjunctedWith(property = propertyFormula, literal = "~unknown")
                 )
                 timeLog.endLap()
                 printState(timeLog.lastLapTime(), stepResults.last().toString())

@@ -10,7 +10,7 @@ import java.text.ParseException
 //In windows run jar with "java -d64 -Xms50m -Xmx10g -jar Tvamcus-1.0.jar" for better performance
 //however this is not fully optimized, and further JVM settings can be tested to attempt improvement
 
-object CommandLineInterface {
+object CLI {
     @JvmStatic
     fun main(args: Array<String>) {
         /*
@@ -23,8 +23,7 @@ object CommandLineInterface {
             val cfgs = getCFGS()
             val property = getPropertySpecificationOf(cfgs)
             val ev = Runner(property, cfgs)
-            ev.modelCheckNoOpt(getBound())
-
+            ev.basicModelCheck(getBound())
         } catch (e: Exception) {
 
             println(e.localizedMessage)

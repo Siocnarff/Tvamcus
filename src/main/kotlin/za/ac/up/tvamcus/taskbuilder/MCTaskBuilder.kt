@@ -18,7 +18,7 @@ class MCTaskBuilder(propertySpecification: PropertySpecification, controlFlowGra
     private val propertySpec: PropertySpecification = propertySpecification
     private val templateTransitionSet: DisjunctiveSet<Transition> = cfgs.encodeAsTemplateTransitionSet()
     private val encodedPredicates: Set<String> = cfgs.deriveEncodedPredicates()
-    val init: Formula = init()
+    val initialState: Formula = init()
 
     /**
      * Creates timestep specific formula from [templateTransitionSet]
