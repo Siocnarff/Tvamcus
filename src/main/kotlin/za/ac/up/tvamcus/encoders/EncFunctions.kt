@@ -1,6 +1,6 @@
 package za.ac.up.tvamcus.encoders
 
-import org.logicng.formulas.FormulaFactory
+import za.ac.up.tvamcus.formulafactory.Ff
 import za.ac.up.tvamcus.sets.ConjunctiveSet
 import za.ac.up.tvamcus.sets.DisjunctiveSet
 import za.ac.up.tvamcus.state.encoded.*
@@ -153,7 +153,7 @@ private fun encGuard(guard: String): String {
             choices.substringAfter(',').dropWhile { it == ' ' }
         )
     } else {
-        encExp("(${FormulaFactory().parse(guard).nnf()})")
+        encExp("(${Ff.p.parse(guard).nnf()})")
     }
 }
 
@@ -283,7 +283,7 @@ private fun encExp(expression: String, timestep: String = "i", negate: Boolean =
     var previousWasPredicate = false
 
     val exp = if(negate) {
-        "(${FormulaFactory().parse(expression).negate().nnf()})"
+        "(${Ff.p.parse(expression).negate().nnf()})"
     } else {
         expression
     }

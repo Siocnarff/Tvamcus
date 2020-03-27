@@ -3,7 +3,7 @@ package za.ac.up.tvamcus.view
 import za.ac.up.tvamcus.parser.Parser
 import za.ac.up.tvamcus.parameters.PropertySpecification
 import za.ac.up.tvamcus.state.cfgs.CFGS
-import za.ac.up.tvamcus.runner.Runner
+import za.ac.up.tvamcus.evaluator.Evaluator
 import java.text.ParseException
 
 //Note: jar build in Tvamcus/build/libs
@@ -22,7 +22,7 @@ object CLI {
         try {
             val cfgs = getCFGS()
             val property = getPropertySpecificationOf(cfgs)
-            val ev = Runner(property, cfgs)
+            val ev = Evaluator(property, cfgs)
             ev.modelCheckNoOpt(getBound())
 
         } catch (e: Exception) {
