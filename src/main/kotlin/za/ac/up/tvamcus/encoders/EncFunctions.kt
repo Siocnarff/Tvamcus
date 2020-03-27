@@ -14,7 +14,7 @@ import kotlin.math.log2
  * by Definition 11 in SCP19
  */
 fun CFGS.encodeAsTemplateTransitionSet(): DisjunctiveSet<Transition> {
-    val over: MutableList<Transition> = mutableListOf()
+    val over: MutableSet<Transition> = mutableSetOf()
     for((pId, process) in processes.withIndex()) {
         for (transition in process.transitions) {
             over.add(
@@ -29,8 +29,8 @@ fun CFGS.encodeAsTemplateTransitionSet(): DisjunctiveSet<Transition> {
 /**
  * Derives the full list of predicates in [CFGS] but now encoded
  */
-fun CFGS.derivePredicates(): List<String> {
-    val predicates: MutableList<String> = mutableListOf()
+fun CFGS.deriveEncodedPredicates(): Set<String> {
+    val predicates: MutableSet<String> = mutableSetOf()
     for (p in this.predicates) {
         predicates.add("${p.value}_i_u")
         predicates.add("${p.value}_i_t")
@@ -125,8 +125,8 @@ fun CFGS.encLocationCopy(pId: Int, lId: Int, timestep: String = "i"): String {
  * @return the encoding of the execution of the operation
  */
 private fun CFGS.encOperation(transition: CfgsTransition): Operation {
-    val butChange = mutableListOf<Int>()
-    val bigAnd = mutableListOf<String>()
+    val butChange = mutableSetOf<Int>()
+    val bigAnd = mutableSetOf<String>()
     for(a in transition.assignments) {
         butChange.add(a.predicate)
         bigAnd.add(encAssignmentExpression(predicate = a.predicate, expression = a.RHS))
@@ -207,8 +207,8 @@ private fun encAssignmentExpression(predicate: Int, expression: String): String 
  * @param modifiedPredicates the predicates that are affected by the current assignment
  * @return Constraint that the non-modified predicates do not change from i to I
  */
-private fun CFGS.encUnchangingPredicateValues(modifiedPredicates: MutableList<Int>): ConjunctiveSet<String> {
-    val bigAnd = mutableListOf<String>()
+private fun CFGS.encUnchangingPredicateValues(modifiedPredicates: MutableSet<Int>): ConjunctiveSet<String> {
+    val bigAnd = mutableSetOf<String>()
     if(this.predicates.isEmpty()) {
         return ConjunctiveSet(bigAnd)
     }
@@ -252,8 +252,8 @@ private fun encAssignmentChoice(predicateId: Int, left: String, right: String): 
  * @param activeProcess the process that executes when we move from timestep i to I
  * @return the encoding of the idling of non-active processes
  */
-private fun CFGS.encIdleAllProcessesExcept(activeProcess: Int): MutableList<String> {
-    val conjunctOver = mutableListOf<String>()
+private fun CFGS.encIdleAllProcessesExcept(activeProcess: Int): MutableSet<String> {
+    val conjunctOver = mutableSetOf<String>()
     for((pId, p) in this.processes.withIndex()) {
         if(activeProcess != pId) {
             val tally = p.numberOfLocations()

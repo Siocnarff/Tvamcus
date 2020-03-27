@@ -24,7 +24,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
     private val cfgs: CFGS = controlFlowGraphState
     private val propertySpec: PropertySpecification = propertySpecification
     private val templateTransitionSet: DisjunctiveSet<Transition> = cfgs.encodeAsTemplateTransitionSet()
-    private val encodedPredicates: List<String> = cfgs.derivePredicates()
+    private val encodedPredicates: Set<String> = cfgs.deriveEncodedPredicates()
 
     /**
      * SAT-based k-bounded model checking runs from k = 0 to [bound]+1 and no SAT-optimisations activated
@@ -161,7 +161,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
      * @return the encoded [cfgs] formula for timestep [timestep]
      */
     private fun transitionSetAsFormula(timestep: Int): Formula {
-        val bigOr: MutableList<Formula> = mutableListOf()
+        val bigOr = mutableSetOf<Formula>()
         templateTransitionSet.disjoinOver.forEach{ bigOr.add( it.asFormula(timestep) ) }
         return ff.or(bigOr)
     }
@@ -220,12 +220,12 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
         }
     }
     private fun ConjunctiveSet<String>.asConjunctiveFormula(timestep: Int): Formula {
-        val bigAnd: MutableList<Formula> = mutableListOf()
+        val bigAnd = mutableSetOf<Formula>()
         conjunctOver.forEach{ bigAnd.add(it.asFormula(timestep)) }
         return ff.and(bigAnd)
     }
     private fun fairnessConstraintFormula(lId: Int, timestep: Int): Formula {
-        val bigAnd = mutableListOf<Formula>()
+        val bigAnd = mutableSetOf<Formula>()
         bigAnd.add("(fr_I_${lId} <=> (re_i | rd_i))".asFormula(timestep))
         for(pId in cfgs.processes.indices.filterNot{ it == lId }) {
             bigAnd.add(p.parse("(fr_${timestep + 1}_${pId} <=> fr_${timestep}_${pId})"))
@@ -241,7 +241,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
      * by Definitions 13 and 14 in SCP20
      */
     private fun encStateRecording(): ConjunctiveSet<String> {
-        val bigAnd = mutableListOf<String>()
+        val bigAnd = mutableSetOf<String>()
         bigAnd.add("(rd_I <=> (re_i | rd_i))")
         encodedPredicates.distinct().forEach {
             bigAnd.add(
@@ -337,7 +337,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
      * @return liveness violation property evaluation formula to be added to formula for [timestep] of [templateTransitionSet]
      */
     private fun livenessViolationProperty(timestep: Int): Formula {
-        val bigAnd = mutableListOf<Formula>()
+        val bigAnd = mutableSetOf<Formula>()
         bigAnd.add(p.parse("rd_$timestep"))
         encodedPredicates.forEach { bigAnd.add(p.parse("(${it.insertTimestep(timestep)} <=> ${it.insertTimestep(timestep)}_c)")) }
         bigAnd.add(p.parse("~lv_$timestep"))
@@ -471,7 +471,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
      * Experimental function
      */
     private fun pathFormula(steps: MutableList<State>): Formula {
-        val bigAnd = mutableListOf<Formula>()
+        val bigAnd = mutableSetOf<Formula>()
         for((t, step) in steps.withIndex()) {
             for((pId, location) in step.locationStatus.withIndex()) {
                 bigAnd.add(
