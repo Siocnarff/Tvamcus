@@ -22,46 +22,9 @@ import kotlin.math.pow
 
 class Runner(propertySpecification: PropertySpecification, controlFlowGraphState: CFGS) {
     private val cfgs: CFGS = controlFlowGraphState
-    private val propertySpecification: PropertySpecification = propertySpecification
-    private val templateTransitionSet: DisjunctiveSet<Transition> = encodeTemplateTransitionSet(cfgs)
-    private val encodedPredicates: List<String> = derivePredicates(cfgs)
-
-    /**
-     * Encodes all possible state space Transitions from i to I
-     *
-     * This encoding is stored in [templateTransitionSet]
-     *
-     * by Definition 11 in SCP19
-     */
-    private fun encodeTemplateTransitionSet(cfgs: CFGS): DisjunctiveSet<Transition> {
-        val over: MutableList<Transition> = mutableListOf()
-        for((pId, process) in cfgs.processes.withIndex()) {
-            for (transition in process.transitions) {
-                over.add(
-                    cfgs.encTransition(pId, transition)
-                )
-            }
-        }
-        println("...CFGSEncoded")
-        return DisjunctiveSet(over)
-    }
-
-    /**
-     * Derives the full list of predicates that are in [templateTransitionSet] and adds them to [encodedPredicates] for future use
-     */
-    private fun derivePredicates(cfgs: CFGS): List<String> {
-        val predicates: MutableList<String> = mutableListOf()
-        for (p in cfgs.predicates) {
-            predicates.add("${p.value}_i_u")
-            predicates.add("${p.value}_i_t")
-        }
-        for ((pId, process) in cfgs.processes.withIndex()) {
-            for (d in 0 until digitRequired(process.numberOfLocations())) {
-                predicates.add("n_i_${pId}_${d}")
-            }
-        }
-        return predicates
-    }
+    private val propertySpec: PropertySpecification = propertySpecification
+    private val templateTransitionSet: DisjunctiveSet<Transition> = cfgs.encodeAsTemplateTransitionSet()
+    private val encodedPredicates: List<String> = cfgs.derivePredicates()
 
     /**
      * SAT-based k-bounded model checking runs from k = 0 to [bound]+1 and no SAT-optimisations activated
@@ -72,7 +35,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
         val startTime = System.nanoTime()
         var formula = init()
         for (t in 0 until bound + 1) {
-            val propertyFormula = if (propertySpecification.type == "liveness") livenessViolationProperty(t) else errorLocation(propertySpecification.location, t)
+            val propertyFormula = if (propertySpec.type == "liveness") livenessViolationProperty(t) else errorLocation(propertySpec.location, t)
             print(" k(a)=$t")
             val unitStartTimeA = System.nanoTime()
             solver.reset()
@@ -105,7 +68,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
                         endT = time,
                         timestep = t
                     )
-                    if(propertySpecification.doubleTest) {
+                    if(propertySpec.doubleTest) {
                         formula.solveAgainWithConstraint(pathFormula(solver.model().literals().pathInfo(t)), t, bound)
                     }
                 } else {
@@ -116,7 +79,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
                         endT = time,
                         timestep = t
                     )
-                    if(propertySpecification.doubleTest) {
+                    if(propertySpec.doubleTest) {
                         formula.solveAgainWithConstraint(pathFormula(pathInfo), t, bound)
                     }
 
@@ -124,7 +87,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
 
                 return
             }
-            formula = ff.and(formula, formulaForTimestamp(t))
+            formula = ff.and(formula, transitionSetAsFormula(t))
         }
         printNoErrorFound(startTime, System.nanoTime(), bound)
     }
@@ -141,7 +104,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
         val startTime = System.nanoTime()
         var formula = ff.and(this, constraint)
         for (t in startIndex until bound + 1) {
-            val property = if (propertySpecification.type == "liveness") livenessViolationProperty(t) else errorLocation(propertySpecification.location, t)
+            val property = if (propertySpec.type == "liveness") livenessViolationProperty(t) else errorLocation(propertySpec.location, t)
             print(" k(a)=$t")
             val unitStartTimeA = System.nanoTime()
             solver.reset()
@@ -185,7 +148,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
                 }
                 return
             }
-            formula = ff.and(formula, formulaForTimestamp(t))
+            formula = ff.and(formula, transitionSetAsFormula(timestep = t))
         }
     }
 
@@ -194,31 +157,31 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
      *
      * This is an encoded timestep specific formula of the [cfgs]
      *
-     * @param t timestep to create formula for
-     * @return the encoded [cfgs] formula for timestep [t]
+     * @param timestep timestep to create formula for
+     * @return the encoded [cfgs] formula for timestep [timestep]
      */
-    private fun formulaForTimestamp(t: Int): Formula {
+    private fun transitionSetAsFormula(timestep: Int): Formula {
         val bigOr: MutableList<Formula> = mutableListOf()
-        templateTransitionSet.disjoinOver.forEach{ bigOr.add( it.asFormula(t)) }
+        templateTransitionSet.disjoinOver.forEach{ bigOr.add( it.asFormula(timestep) ) }
         return ff.or(bigOr)
     }
     /**
-     * Creates timestep specific formula from the [CfgsTransition] it is called on
+     * Creates timestep specific formula from the [Transition] it is called on
      *
-     * Note, [PropertySpecification.type] is also taken into account when encoding the [CfgsTransition]
+     * Note, [PropertySpecification.type] is also taken into account when encoding the [Transition]
      *
-     * @param [t] timestep to encode [CfgsTransition] for
-     * @return encoded formula of the [CfgsTransition]
+     * @param [timestep] timestep to encode [Transition] for
+     * @return encoded formula of the [Transition]
      */
-    private fun Transition.asFormula(timestamp: Int): Formula {
+    private fun Transition.asFormula(timestep: Int): Formula {
         val core = ff.and(
-            oldLocation.asFormula(timestamp),
-            operation.asFormula(timestamp),
-            newLocation.asFormula(timestamp),
-            idle.asConjunctiveFormula(timestamp)
+            oldLocation.asFormula(timestep),
+            operation.asFormula(timestep),
+            newLocation.asFormula(timestep),
+            idle.asConjunctiveFormula(timestep)
         )
-        return if(propertySpecification.type == "liveness") {
-            ff.and(core, livenessEvaluationFormula(parentProcess, timestamp))
+        return if(propertySpec.type == "liveness") {
+            ff.and(core, livenessEvaluationFormula(parentProcess, timestep))
         } else {
             core
         }
@@ -227,13 +190,13 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
     /**
      * Creates timestep specific sub-formula from [Operation] it is called on
      *
-     * @param t timestep to create sub-formula for
-     * @return the encoded [cfgs] sub-formula for timestep [t]
+     * @param timestep timestep to create sub-formula for
+     * @return the encoded [cfgs] sub-formula for timestep [timestep]
      */
-    private fun Operation.asFormula(t: Int): Formula {
+    private fun Operation.asFormula(timestep: Int): Formula {
         return ff.and(
-            guard.asFormula(t),
-            assignments.asConjunctiveFormula ( t )
+            guard.asFormula(timestep),
+            assignments.asConjunctiveFormula (timestep)
         )
     }
 
@@ -242,32 +205,36 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
      *
      * by Definitions 13 and 14 in SCP20
      *
-     * @param t timestep formula is to be created for
+     * @param timestep timestep formula is to be created for
      * @return [Formula] to conjunct with the encoding of each [CfgsTransition] when testing liveness
      */
-    private fun livenessEvaluationFormula(lId: Int, t: Int): Formula {
+    private fun livenessEvaluationFormula(lId: Int, timestep: Int): Formula {
         val conjunctiveSet = encStateRecording()
-        return if(!propertySpecification.fairnessON) {
-            conjunctiveSet.asConjunctiveFormula(t)
+        return if(!propertySpec.fairnessON) {
+            conjunctiveSet.asConjunctiveFormula(timestep)
         } else {
             ff.and(
-                conjunctiveSet.asConjunctiveFormula(t),
-                fairnessConstraintFormula(lId, t)
+                conjunctiveSet.asConjunctiveFormula(timestep),
+                fairnessConstraintFormula(lId, timestep)
             )
         }
     }
-    private fun ConjunctiveSet<String>.asConjunctiveFormula(timestamp: Int): Formula {
+    private fun ConjunctiveSet<String>.asConjunctiveFormula(timestep: Int): Formula {
         val bigAnd: MutableList<Formula> = mutableListOf()
-        conjunctOver.forEach{ bigAnd.add(it.asFormula(timestamp)) }
+        conjunctOver.forEach{ bigAnd.add(it.asFormula(timestep)) }
         return ff.and(bigAnd)
     }
-    private fun fairnessConstraintFormula(lId: Int, t: Int): Formula {
+    private fun fairnessConstraintFormula(lId: Int, timestep: Int): Formula {
         val bigAnd = mutableListOf<Formula>()
-        bigAnd.add("(fr_I_${lId} <=> (re_i | rd_i))".asFormula(t))
+        bigAnd.add("(fr_I_${lId} <=> (re_i | rd_i))".asFormula(timestep))
         for(pId in cfgs.processes.indices.filterNot{ it == lId }) {
-            bigAnd.add(p.parse("(fr_${t + 1}_${pId} <=> fr_${t}_${pId})"))
+            bigAnd.add(p.parse("(fr_${timestep + 1}_${pId} <=> fr_${timestep}_${pId})"))
         }
         return ff.and(bigAnd)
+    }
+
+    private fun String.asFormula(t: Int): Formula {
+        return p.parse(this.insertTimestep(t))
     }
 
     /**
@@ -281,7 +248,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
                 "(${it.replace("i", "I")}_c <=> (((re_i & ~rd_i) => $it) & (~(re_i & ~rd_i) => ${it}_c)))"
             )
         }
-        bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${propertySpecification.processList.encProgressExpression()})))")
+        bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${propertySpec.processList.encProgressExpression()})))")
         return ConjunctiveSet(bigAnd)
     }
 
@@ -295,8 +262,8 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
     private fun List<Int>.encProgressExpression(): String {
         var progress = ""
         for (pId in this) {
-            progress += cfgs.encLocation(pId, lId = propertySpecification.location)
-            progress += " ${propertySpecification.operator} "
+            progress += cfgs.encLocation(pId, lId = propertySpec.location)
+            progress += " ${propertySpec.operator} "
         }
         return progress.dropLast(3)
     }
@@ -312,10 +279,10 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
         val conjunctOver = mutableListOf<Formula>()
         for (pId in cfgs.processes.indices) {
             conjunctOver.add(p.parse(cfgs.encLocation(pId, lId = 0, timestep = "0")))
-            if (propertySpecification.type == "liveness") {
+            if (propertySpec.type == "liveness") {
                 conjunctOver.add(p.parse("~rd_0 & ~lv_0"))
                 conjunctOver.add(p.parse(cfgs.encLocationCopy(pId, lId = 0, timestep = "0")))
-                if(propertySpecification.fairnessON) {
+                if(propertySpec.fairnessON) {
                     conjunctOver.add(p.parse("~fr_0_${pId}"))
                 }
             }
@@ -329,7 +296,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
                     p.parse(encIsTrue(predicateId = predicate.value, timestep = "0"))
                 }
             )
-            if(propertySpecification.type == "liveness") {
+            if(propertySpec.type == "liveness") {
                 conjunctOver.add(
                     if (initAs != null && !initAs) {
                         p.parse(encIsFalseCopy(predicateId = predicate.value, timestep = "0"))
@@ -343,19 +310,19 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
     }
 
     /**
-     * Encodes the location it is called on as a part of the composite error location for timestep [t]
+     * Encodes the location it is called on as a part of the composite error location for timestep [timestep]
      *
      * by Definition 8 in SPC19
      *
-     * @param t timestep for which location is deemed as the error location
-     * @return formula of error location for timestep [t]
+     * @param timestep timestep for which location is deemed as the error location
+     * @return formula of error location for timestep [timestep]
      */
-    private fun errorLocation(lId: Int, t: Int): Formula {
+    private fun errorLocation(lId: Int, timestep: Int): Formula {
         val toJoin = mutableListOf<Formula>()
-        for (pId in propertySpecification.processList) {
-            toJoin.add(p.parse(cfgs.encLocation(pId, lId, timestep = t.toString())))
+        for (pId in propertySpec.processList) {
+            toJoin.add(p.parse(cfgs.encLocation(pId, lId, timestep.toString())))
         }
-        return if (propertySpecification.operator == "|") ff.or(toJoin) else ff.and(toJoin)
+        return if (propertySpec.operator == "|") ff.or(toJoin) else ff.and(toJoin)
     }
 
     /**
@@ -363,52 +330,66 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
      *
      * by Definition 14 in SCP20
      *
-     * Encodes that a loop has been found at timestep [t] in the state space of [cfgs] that violates liveness
+     * Encodes that a loop has been found at timestep [timestep]] in the state space of [cfgs] that violates liveness
      * (under fairness if and only if [PropertySpecification.fairnessON])
      *
-     * @param [t] the timestep at which the loop closes
-     * @return liveness violation property evaluation formula to be added to formula for [t] of [templateTransitionSet]
+     * @param [timestep] the timestep at which the loop closes
+     * @return liveness violation property evaluation formula to be added to formula for [timestep] of [templateTransitionSet]
      */
-    private fun livenessViolationProperty(t: Int): Formula {
+    private fun livenessViolationProperty(timestep: Int): Formula {
         val bigAnd = mutableListOf<Formula>()
-        bigAnd.add(p.parse("rd_$t"))
-        encodedPredicates.forEach { bigAnd.add(p.parse("(${it.insertTimestamp(t)} <=> ${it.insertTimestamp(t)}_c)")) }
-        bigAnd.add(p.parse("~lv_$t"))
-        if(propertySpecification.fairnessON) {
+        bigAnd.add(p.parse("rd_$timestep"))
+        encodedPredicates.forEach { bigAnd.add(p.parse("(${it.insertTimestep(timestep)} <=> ${it.insertTimestep(timestep)}_c)")) }
+        bigAnd.add(p.parse("~lv_$timestep"))
+        if(propertySpec.fairnessON) {
             for(pId in cfgs.processes.indices) {
-                bigAnd.add(p.parse("fr_${t}_$pId"))
+                bigAnd.add(p.parse("fr_${timestep}_$pId"))
             }
         }
         return ff.and(bigAnd)
     }
 
     /**
-     * Ascertains the truth value of the variables re_i and rd_i in the SortedSet of literals
-     * it is called on (this Set should be derived from the SAT model)
+     * Replaces i in the string it is called on with [timestep] and I with ([timestep] + 1)
      *
-     * @param [t] used to create the correct instance of re_i and rd_i
-     * @return Pair<statusOf(re_[t]), statusOf(rd_[t])>
+     * @param timestep base timestep to insert into string
+     * @return string with [timestep] inserted where placeholders were
      */
-    private fun SortedSet<Literal>.reRdEvaluation(t: Int): Pair<String, String> {
-        return Pair(
-            if (this.contains(ff.literal("re_$t", true))) "re = true" else "re = false",
-            if (this.contains(ff.literal("rd_$t", true))) "rd = true" else "rd = false"
+    private fun String.insertTimestep(timestep: Int): String {
+        return this.replace(
+            "i", "$timestep"
+        ).replace(
+            "I", "${timestep + 1}"
         )
     }
 
     /**
-     * For the [t] timestep encoding of each predicate in the [cfgs], ascertain the truth value of said predicate
+     * Ascertains the truth value of the variables re_i and rd_i in the SortedSet of literals
+     * it is called on (this Set should be derived from the SAT model)
+     *
+     * @param [timestep] used to create the correct instance of re_i and rd_i
+     * @return Pair<statusOf(re_[timestep]), statusOf(rd_[timestep])>
+     */
+    private fun SortedSet<Literal>.reRdEvaluation(timestep: Int): Pair<String, String> {
+        return Pair(
+            if (this.contains(ff.literal("re_$timestep", true))) "re = true" else "re = false",
+            if (this.contains(ff.literal("rd_$timestep", true))) "rd = true" else "rd = false"
+        )
+    }
+
+    /**
+     * For the [timestep] timestep encoding of each predicate in the [cfgs], ascertain the truth value of said predicate
      * in the SortedSet of literals it is called on (this Set should be derived from the SAT model)
      *
-     * @param [t] timestep to check predicate truth values
+     * @param [timestep] timestep to check predicate truth values
      * @return list of predicates and their respective truth values
      */
-    private fun SortedSet<Literal>.predicateEvaluation(t: Int): MutableList<String> {
+    private fun SortedSet<Literal>.predicateEvaluation(timestep: Int): MutableList<String> {
         val predicateStatuses = mutableListOf<String>()
         for(p in cfgs.predicates) {
-            if(this.contains(ff.literal("${p.value}_${t}_u", true))) {
+            if(this.contains(ff.literal("${p.value}_${timestep}_u", true))) {
                 predicateStatuses.add("${p.key} = unknown")
-            } else if(this.contains(ff.literal("${p.value}_${t}_t", true))) {
+            } else if(this.contains(ff.literal("${p.value}_${timestep}_t", true))) {
                 predicateStatuses.add("${p.key} = true")
             } else {
                 predicateStatuses.add("${p.key} = false")
@@ -421,17 +402,17 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
      * Ascertains the truth value of the fairness evaluation variable of each process (fr_i_pId)
      * in the SortedSet of literals it is called on (this Set should be derived from the SAT model)
      *
-     * @param [t] used to create the correct instance of fr_i_pId
+     * @param [timestep] used to create the correct instance of fr_i_pId
      * @return List of process fairness variable truth values
      */
-    private fun SortedSet<Literal>.fairnessEvaluation(t: Int): MutableList<String> {
+    private fun SortedSet<Literal>.fairnessEvaluation(timestep: Int): MutableList<String> {
         val fairnessVariableStatuses = mutableListOf<String>()
-        if(!propertySpecification.fairnessON) {
+        if(!propertySpec.fairnessON) {
             fairnessVariableStatuses.add("n.a.")
             return fairnessVariableStatuses
         }
         for(pId in cfgs.processes.indices) {
-            if(this.contains(ff.literal("fr_${t}_${pId}", true))) {
+            if(this.contains(ff.literal("fr_${timestep}_${pId}", true))) {
                 fairnessVariableStatuses.add("P$pId = fair")
             } else {
                 fairnessVariableStatuses.add("P$pId = unfair")
@@ -441,16 +422,16 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
     }
 
     /**
-     * Using the SortedSet of literals it is called on, it derives from the truth values of the location literals, where each process is at timestep [t]
-     * @param [t] timestep to find process locations for
-     * @return list of strings denoting the timestep [t] location of each process
+     * Using the SortedSet of literals it is called on, it derives from the truth values of the location literals, where each process is at timestep [timestep]
+     * @param [timestep] timestep to find process locations for
+     * @return list of strings denoting the timestep [timestep] location of each process
      */
-    private fun SortedSet<Literal>.locationEvaluation(t: Int): MutableList<String> {
+    private fun SortedSet<Literal>.locationEvaluation(timestep: Int): MutableList<String> {
         val processLocations = mutableListOf<String>()
         for ((pId, process) in cfgs.processes.withIndex()) {
             var processLocation = ""
             for(d in 0 until digitRequired(process.numberOfLocations())) {
-                processLocation += if(this.contains(ff.literal("n_${t}_${pId}_${d}", false))) {
+                processLocation += if(this.contains(ff.literal("n_${timestep}_${pId}_${d}", false))) {
                     "0"
                 } else {
                     "1"
@@ -511,20 +492,6 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
             }
         }
         return tally
-    }
-    
-    private fun String.asFormula(t: Int): Formula {
-        return p.parse(this.insertTimestamp(t))
-    }
-
-    /**
-     * Replaces i in the string it is called on with [t] and I with ([t] + 1)
-     *
-     * @param t base timestep to insert into string
-     * @return string with [t] inserted where placeholders were
-     */
-    private fun String.insertTimestamp(t: Int): String {
-        return this.replace("i", "$t").replace("I", "${t + 1}")
     }
 
     private fun MutableList<State>.print() {

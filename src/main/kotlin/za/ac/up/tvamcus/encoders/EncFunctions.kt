@@ -2,9 +2,46 @@ package za.ac.up.tvamcus.encoders
 
 import org.logicng.formulas.FormulaFactory
 import za.ac.up.tvamcus.sets.ConjunctiveSet
+import za.ac.up.tvamcus.sets.DisjunctiveSet
 import za.ac.up.tvamcus.state.encoded.*
 import za.ac.up.tvamcus.state.cfgs.*
 import kotlin.math.log2
+/**
+ * Encodes all possible state space Transitions from i to I
+ *
+ * This encoding is in the form of  DisjunctiveSet<Transition>
+ *
+ * by Definition 11 in SCP19
+ */
+fun CFGS.encodeAsTemplateTransitionSet(): DisjunctiveSet<Transition> {
+    val over: MutableList<Transition> = mutableListOf()
+    for((pId, process) in processes.withIndex()) {
+        for (transition in process.transitions) {
+            over.add(
+                this.encTransition(pId, transition)
+            )
+        }
+    }
+    println("...CFGSEncoded")
+    return DisjunctiveSet(over)
+}
+
+/**
+ * Derives the full list of predicates in [CFGS] but now encoded
+ */
+fun CFGS.derivePredicates(): List<String> {
+    val predicates: MutableList<String> = mutableListOf()
+    for (p in this.predicates) {
+        predicates.add("${p.value}_i_u")
+        predicates.add("${p.value}_i_t")
+    }
+    for ((pId, process) in this.processes.withIndex()) {
+        for (d in 0 until digitRequired(process.numberOfLocations())) {
+            predicates.add("n_i_${pId}_${d}")
+        }
+    }
+    return predicates
+}
 
 /**
  * Encodes a state space Transition from i to I
