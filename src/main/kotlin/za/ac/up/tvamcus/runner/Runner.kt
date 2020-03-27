@@ -32,7 +32,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
         val timestepCfgsFormulas = mutableListOf<Formula>()
         val timeLog = TimeLog()
 
-        timestepCfgsFormulas.add(init())
+        timestepCfgsFormulas.add(taskBuilder.init)
         for (t in 0 until bound + 1) {
             val propertyFormula = taskBuilder.propertyFormula(t)
             print(" k(a)=$t")
@@ -70,51 +70,10 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
                 }
                 return
             }
-            timestepCfgsFormulas.add(conjunct(timestepCfgsFormulas.last(), taskBuilder.transitionSetAsFormula(t)))
+            timestepCfgsFormulas.add(conjunct(timestepCfgsFormulas.last(), taskBuilder.cfgAsFormula(t)))
         }
         timeLog.endLap()
         printNoErrorFound(timeLog.totalTime(), bound)
-    }
-
-    /**
-     * Initializes formula used in [modelCheckNoOpt]
-     *
-     * see page 45 of SCP19
-     *
-     * @return initial state of [cfgs], encoded to formula
-     */
-    private fun init(): Formula {
-        val conjunctOver = mutableListOf<Formula>()
-        for (pId in cfgs.processes.indices) {
-            conjunctOver.add(parse(cfgs.encLocation(pId, lId = 0, t = "0")))
-            if (propertySpec.type == "liveness") {
-                conjunctOver.add(parse("~rd_0 & ~lv_0"))
-                conjunctOver.add(parse(cfgs.encLocationCopy(pId, lId = 0, t = "0")))
-                if(propertySpec.fairnessON) {
-                    conjunctOver.add(parse("~fr_0_${pId}"))
-                }
-            }
-        }
-        for (predicate in cfgs.predicates) {
-            val initAs: Boolean? = cfgs.init[predicate.key]
-            conjunctOver.add(
-                if (initAs != null && !initAs) {
-                    parse(encIsFalse(predicate.value, t = "0"))
-                } else {
-                    parse(encIsTrue(predicateId = predicate.value, t = "0"))
-                }
-            )
-            if(propertySpec.type == "liveness") {
-                conjunctOver.add(
-                    if (initAs != null && !initAs) {
-                        parse(encIsFalseCopy(predicateId = predicate.value, t = "0"))
-                    } else {
-                        parse(encIsTrueCopy(predicateId = predicate.value, t = "0"))
-                    }
-                )
-            }
-        }
-        return conjunct(conjunctOver)
     }
 
     private fun MutableList<Formula>.evaluateLatestConjunctedWith(property: Formula, literal: String): Tristate {
@@ -162,7 +121,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
                 }
                 return
             }
-            formulas.add(conjunct(formulas.last(), taskBuilder.transitionSetAsFormula(timestep = t)))
+            formulas.add(conjunct(formulas.last(), taskBuilder.cfgAsFormula(timestep = t)))
         }
     }
 

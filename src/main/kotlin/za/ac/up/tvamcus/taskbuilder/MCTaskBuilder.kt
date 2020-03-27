@@ -1,9 +1,7 @@
 package za.ac.up.tvamcus.taskbuilder
 
 import org.logicng.formulas.Formula
-import za.ac.up.tvamcus.encoders.deriveEncodedPredicates
-import za.ac.up.tvamcus.encoders.encLocation
-import za.ac.up.tvamcus.encoders.encodeAsTemplateTransitionSet
+import za.ac.up.tvamcus.encoders.*
 import za.ac.up.tvamcus.logicng.conjunct
 import za.ac.up.tvamcus.logicng.disjoin
 import za.ac.up.tvamcus.logicng.parse
@@ -20,6 +18,7 @@ class MCTaskBuilder(propertySpecification: PropertySpecification, controlFlowGra
     private val propertySpec: PropertySpecification = propertySpecification
     private val templateTransitionSet: DisjunctiveSet<Transition> = cfgs.encodeAsTemplateTransitionSet()
     private val encodedPredicates: Set<String> = cfgs.deriveEncodedPredicates()
+    val init: Formula = init()
 
     /**
      * Creates timestep specific formula from [templateTransitionSet]
@@ -29,10 +28,51 @@ class MCTaskBuilder(propertySpecification: PropertySpecification, controlFlowGra
      * @param timestep timestep to create formula for
      * @return the encoded [cfgs] formula for timestep [timestep]
      */
-    fun transitionSetAsFormula(timestep: Int): Formula {
+    fun cfgAsFormula(timestep: Int): Formula {
         val bigOr = mutableSetOf<Formula>()
         templateTransitionSet.disjoinOver.forEach{ bigOr.add( it.asFormula(timestep) ) }
         return disjoin(bigOr)
+    }
+
+    /**
+     * Initializes formula
+     *
+     * see page 45 of SCP19
+     *
+     * @return initial state of [cfgs], encoded to formula
+     */
+    private fun init(): Formula {
+        val over = mutableListOf<Formula>()
+        for (pId in cfgs.processes.indices) {
+            over.add(parse(cfgs.encLocation(pId, lId = 0, t = "0")))
+            if (propertySpec.type == "liveness") {
+                over.add(parse("~rd_0 & ~lv_0"))
+                over.add(parse(cfgs.encLocationCopy(pId, lId = 0, t = "0")))
+                if(propertySpec.fairnessON) {
+                    over.add(parse("~fr_0_${pId}"))
+                }
+            }
+        }
+        for (predicate in cfgs.predicates) {
+            val initAs: Boolean? = cfgs.init[predicate.key]
+            over.add(
+                if (initAs != null && !initAs) {
+                    parse(encIsFalse(predicate.value, t = "0"))
+                } else {
+                    parse(encIsTrue(predicateId = predicate.value, t = "0"))
+                }
+            )
+            if(propertySpec.type == "liveness") {
+                over.add(
+                    if (initAs != null && !initAs) {
+                        parse(encIsFalseCopy(predicateId = predicate.value, t = "0"))
+                    } else {
+                        parse(encIsTrueCopy(predicateId = predicate.value, t = "0"))
+                    }
+                )
+            }
+        }
+        return conjunct(over)
     }
 
     fun propertyFormula(t: Int): Formula {
@@ -125,10 +165,11 @@ class MCTaskBuilder(propertySpecification: PropertySpecification, controlFlowGra
         bigAnd.add("(rd_I <=> (re_i | rd_i))")
         encodedPredicates.distinct().forEach {
             bigAnd.add(
-                "(${it.replace("i", "I")}_c <=> (((re_i & ~rd_i) => $it) & (~(re_i & ~rd_i) => ${it}_c)))"
+                "(${it.replace("i", "I")}_c <=> " +
+                        "(((re_i & ~rd_i) => $it) & (~(re_i & ~rd_i) => ${it}_c)))"
             )
         }
-        bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${propertySpec.processList.encProgressExpression()})))")
+        bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${encProgressExpression(propertySpec.processList)})))")
         return ConjunctiveSet(bigAnd)
     }
 
@@ -140,9 +181,9 @@ class MCTaskBuilder(propertySpecification: PropertySpecification, controlFlowGra
      *
      * @return Encoding of predicate expression "progress" in unparsed string format
      */
-    private fun List<Int>.encProgressExpression(): String {
+    private fun encProgressExpression(processIds: List<Int>): String {
         var progress = ""
-        for (pId in this) {
+        for (pId in processIds) {
             progress += cfgs.encLocation(pId, lId = propertySpec.location)
             progress += " ${propertySpec.operator} "
         }
