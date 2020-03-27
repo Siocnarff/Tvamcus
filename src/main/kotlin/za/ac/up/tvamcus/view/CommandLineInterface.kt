@@ -3,14 +3,14 @@ package za.ac.up.tvamcus.view
 import za.ac.up.tvamcus.parser.Parser
 import za.ac.up.tvamcus.parameters.PropertySpecification
 import za.ac.up.tvamcus.state.cfgs.CFGS
-import za.ac.up.tvamcus.evaluator.Evaluator
+import za.ac.up.tvamcus.runner.Runner
 import java.text.ParseException
 
 //Note: jar build in Tvamcus/build/libs
 //In windows run jar with "java -d64 -Xms50m -Xmx10g -jar Tvamcus-1.0.jar" for better performance
 //however this is not fully optimized, and further JVM settings can be tested to attempt improvement
 
-object CLI {
+object CommandLineInterface {
     @JvmStatic
     fun main(args: Array<String>) {
         /*
@@ -22,7 +22,7 @@ object CLI {
         try {
             val cfgs = getCFGS()
             val property = getPropertySpecificationOf(cfgs)
-            val ev = Evaluator(property, cfgs)
+            val ev = Runner(property, cfgs)
             ev.modelCheckNoOpt(getBound())
 
         } catch (e: Exception) {

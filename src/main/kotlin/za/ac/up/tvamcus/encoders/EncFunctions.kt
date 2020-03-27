@@ -434,35 +434,3 @@ fun encIsTrueCopy(predicateId: Int, timestep: String = "I"): String {
 fun encIsTrue(predicateId: Int, timestep: String = "I"): String {
     return "(~${predicateId}_${timestep}_u & ${predicateId}_${timestep}_t)"
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
