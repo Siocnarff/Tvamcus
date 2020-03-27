@@ -56,7 +56,9 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
                     resultPathInfo(t).print()
                     printSatisfiable(timeLog.totalTime(), t)
                     if(propertySpec.doubleTest) {
-                        timestepCfgsFormulas.last().solveAgainWithConstraint(pathFormula(evaluationResultLiterals().pathInfo(t)), t, bound)
+                        timestepCfgsFormulas.last().solveAgainWithConstraint(
+                            pathFormula(evaluationResultLiterals().pathInfo(t)), t, bound
+                        )
                     }
                 } else {
                     pathInfo.print()
@@ -84,10 +86,10 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
     private fun init(): Formula {
         val conjunctOver = mutableListOf<Formula>()
         for (pId in cfgs.processes.indices) {
-            conjunctOver.add(parse(cfgs.encLocation(pId, lId = 0, timestep = "0")))
+            conjunctOver.add(parse(cfgs.encLocation(pId, lId = 0, t = "0")))
             if (propertySpec.type == "liveness") {
                 conjunctOver.add(parse("~rd_0 & ~lv_0"))
-                conjunctOver.add(parse(cfgs.encLocationCopy(pId, lId = 0, timestep = "0")))
+                conjunctOver.add(parse(cfgs.encLocationCopy(pId, lId = 0, t = "0")))
                 if(propertySpec.fairnessON) {
                     conjunctOver.add(parse("~fr_0_${pId}"))
                 }
@@ -97,17 +99,17 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
             val initAs: Boolean? = cfgs.init[predicate.key]
             conjunctOver.add(
                 if (initAs != null && !initAs) {
-                    parse(encIsFalse(predicate.value, timestep = "0"))
+                    parse(encIsFalse(predicate.value, t = "0"))
                 } else {
-                    parse(encIsTrue(predicateId = predicate.value, timestep = "0"))
+                    parse(encIsTrue(predicateId = predicate.value, t = "0"))
                 }
             )
             if(propertySpec.type == "liveness") {
                 conjunctOver.add(
                     if (initAs != null && !initAs) {
-                        parse(encIsFalseCopy(predicateId = predicate.value, timestep = "0"))
+                        parse(encIsFalseCopy(predicateId = predicate.value, t = "0"))
                     } else {
-                        parse(encIsTrueCopy(predicateId = predicate.value, timestep = "0"))
+                        parse(encIsTrueCopy(predicateId = predicate.value, t = "0"))
                     }
                 )
             }
@@ -181,8 +183,8 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
     }
 
     /**
-     * For the [timestep] timestep encoding of each predicate in the [cfgs], ascertain the truth value of said predicate
-     * in the SortedSet of literals it is called on (this Set should be derived from the SAT model)
+     * For the [timestep] timestep encoding of each predicate in the [cfgs], ascertain the truth value of said
+     * predicate in the SortedSet of literals it is called on (this Set should be derived from the SAT model)
      *
      * @param [timestep] timestep to check predicate truth values
      * @return list of predicates and their respective truth values
@@ -225,7 +227,8 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
     }
 
     /**
-     * Using the SortedSet of literals it is called on, it derives from the truth values of the location literals, where each process is at timestep [timestep]
+     * Using the SortedSet of literals it is called on, it derives from the truth values
+     * of the location literals, where each process is at timestep [timestep]
      * @param [timestep] timestep to find process locations for
      * @return list of strings denoting the timestep [timestep] location of each process
      */
@@ -234,7 +237,9 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
         for ((pId, process) in cfgs.processes.withIndex()) {
             var processLocation = ""
             for(d in 0 until digitRequired(process.numberOfLocations())) {
-                processLocation += if(this.contains(LogicNG.ff.literal("n_${timestep}_${pId}_${d}", false))) {
+                processLocation += if(
+                    this.contains(LogicNG.ff.literal("n_${timestep}_${pId}_${d}", false))
+                ) {
                     "0"
                 } else {
                     "1"
@@ -278,7 +283,7 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
         for((t, step) in steps.withIndex()) {
             for((pId, location) in step.locationStatus.withIndex()) {
                 bigAnd.add(
-                    parse(cfgs.encLocation(pId, lId = location.toInt(), timestep = t.toString()))
+                    parse(cfgs.encLocation(pId, lId = location.toInt(), t = t.toString()))
                 )
             }
         }

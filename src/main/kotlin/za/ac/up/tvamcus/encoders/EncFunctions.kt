@@ -55,9 +55,9 @@ fun CFGS.deriveEncodedPredicates(): Set<String> {
 fun CFGS.encTransition(pId: Int, transition: CfgsTransition): Transition {
     return Transition(
         pId,
-        this.encLocation(pId, lId = transition.source, timestep =  "i"),
+        this.encLocation(pId, lId = transition.source, t =  "i"),
         encOperation(transition),
-        this.encLocation(pId = pId, lId = transition.destination, timestep = "I"),
+        this.encLocation(pId = pId, lId = transition.destination, t = "I"),
         ConjunctiveSet(encIdleAllProcessesExcept(pId))
     )
 }
@@ -68,10 +68,10 @@ fun CFGS.encTransition(pId: Int, transition: CfgsTransition): Transition {
  * by Definition 8 in SCP19
  *
  * @param pId ID of process the location belongs to
- * @param timestep the timestep location is encoded for, by default placeholder "i" is used
+ * @param t the t location is encoded for, by default placeholder "i" is used
  * @return enc(loc)_i
  */
-fun CFGS.encLocation(pId: Int, lId: Int, timestep: String = "i"): String {
+fun CFGS.encLocation(pId: Int, lId: Int, t: String = "i"): String {
     val digit = digitRequired(this.processes[pId].numberOfLocations())
     var output = ""
     var binaryId = toBinaryString(lId)
@@ -79,7 +79,7 @@ fun CFGS.encLocation(pId: Int, lId: Int, timestep: String = "i"): String {
         binaryId = "0$binaryId"
     }
     for((d, c) in binaryId.withIndex()) {
-        val atom = "n_${timestep}_${pId}_${d}"
+        val atom = "n_${t}_${pId}_${d}"
         output +=  if(c == '1') {
             "$atom & "
         } else {
@@ -95,10 +95,10 @@ fun CFGS.encLocation(pId: Int, lId: Int, timestep: String = "i"): String {
  * by Definition 8 in SCP19
  *
  * @param pId ID of process the location belongs to
- * @param timestep the timestep location is encoded for, by default placeholder "i" is used
+ * @param t the t location is encoded for, by default placeholder "i" is used
  * @return enc(loc)_i_c
  */
-fun CFGS.encLocationCopy(pId: Int, lId: Int, timestep: String = "i"): String {
+fun CFGS.encLocationCopy(pId: Int, lId: Int, t: String = "i"): String {
     val digit = digitRequired(this.processes[pId].numberOfLocations())
     var output = ""
     var binaryId = toBinaryString(lId)
@@ -106,7 +106,7 @@ fun CFGS.encLocationCopy(pId: Int, lId: Int, timestep: String = "i"): String {
         binaryId = "0$binaryId"
     }
     for((d, c) in binaryId.withIndex()) {
-        val atomC = "n_${timestep}_${pId}_${d}_c"
+        val atomC = "n_${t}_${pId}_${d}_c"
         output +=  if(c == '1') {
             "$atomC & "
         } else {
@@ -200,7 +200,7 @@ private fun encAssignmentExpression(predicate: Int, expression: String): String 
 }
 
 /**
- * Encodes that the values of all predicates, except [modifiedPredicates], remain unchanged from timestep i to I
+ * Encodes that the values of all predicates, except [modifiedPredicates], remain unchanged from t i to I
  *
  * by Definition 11 in SCP19
  *
@@ -237,9 +237,9 @@ private fun encAssignmentChoice(predicateId: Int, left: String, right: String): 
     } else if (right == "${'$'}false" && left == "${'$'}false") {
         encIsUnknown(predicateId)
     } else {
-        "((${encExp(left)} & ${encIsTrue(predicateId)}) | " +
-                "(${encExp(right)} & ${encIsFalse(predicateId)}) | " +
-                "(${encExp("($left | $right)", negate = true).replace("unknown", "${'$'}true")} & ${encIsUnknown(predicateId)}))"
+        "((${encExp(left)} & ${encIsTrue(predicateId)}) | (${encExp(right)} & ${encIsFalse(predicateId)}) | " +
+        "(${encExp("($left | $right)", true).replace("unknown", "${'$'}true")}" +
+        " & ${encIsUnknown(predicateId)}))"
     }
 }
 
@@ -249,7 +249,7 @@ private fun encAssignmentChoice(predicateId: Int, left: String, right: String): 
  * Encoded by the constraint that the locations of the idling processes do not change from i to I
  * by Definition 11 in SCP19
  *
- * @param activeProcess the process that executes when we move from timestep i to I
+ * @param activeProcess the process that executes when we move from t i to I
  * @return the encoding of the idling of non-active processes
  */
 private fun CFGS.encIdleAllProcessesExcept(activeProcess: Int): MutableSet<String> {
@@ -272,11 +272,11 @@ private fun CFGS.encIdleAllProcessesExcept(activeProcess: Int): MutableSet<Strin
  *
  * by Definition 10 in SCP19
  *
- * @param timestep the timestep the expression is encoded for (by default placeholder "i" is used)
+ * @param t the t the expression is encoded for (by default placeholder "i" is used)
  * @param negate if TRUE, expression is negated before being encoded
  * @return enc(exp)_i
  */
-private fun encExp(expression: String, timestep: String = "i", negate: Boolean = false): String {
+private fun encExp(expression: String, negate: Boolean = false, t: String = "i"): String {
     var output = ""
     var predicate = ""
     var operator = ""
@@ -292,7 +292,7 @@ private fun encExp(expression: String, timestep: String = "i", negate: Boolean =
         if (c == ' ' || c == '&' || c == '|' || c == '(' || c == ')') {
             if (previousWasPredicate) {
                 if (predicate != "") {
-                    output += encPredicate(predicate, timestep)
+                    output += encPredicate(predicate, t)
                     predicate = ""
                 }
                 operator += c
@@ -314,7 +314,7 @@ private fun encExp(expression: String, timestep: String = "i", negate: Boolean =
         }
     }
     return if (output == "") {
-        encPredicate(predicate, timestep)
+        encPredicate(predicate, t)
     } else {
         output + operator
     }
@@ -352,10 +352,10 @@ fun digitRequired(numLocations: Int): Int {
  *
  * by Definition 10 in SCP19
  *
- * @param timestep predicate is encoded for (by default placeholder "i" is used)
+ * @param t predicate is encoded for (by default placeholder "i" is used)
  * @return enc(p)
  */
-fun encPredicate(predicateId: String, timestep: String = "i"): String {
+fun encPredicate(predicateId: String, t: String = "i"): String {
     if (predicateId == "") {
         return ""
     }
@@ -363,74 +363,74 @@ fun encPredicate(predicateId: String, timestep: String = "i"): String {
         when (val p = predicateId.substring(1)) {
             "${'$'}true" -> "${'$'}false"
             "${'$'}false" -> "${'$'}true"
-            else -> "((${p}_${timestep}_u & unknown) | (~${p}_${timestep}_u & ~${p}_${timestep}_t))"
+            else -> "((${p}_${t}_u & unknown) | (~${p}_${t}_u & ~${p}_${t}_t))"
         }
     } else {
         when (predicateId) {
             "${'$'}true" -> "${'$'}true"
             "${'$'}false" -> "${'$'}false"
-            else -> "((${predicateId}_${timestep}_u & unknown) | (~${predicateId}_${timestep}_u & ${predicateId}_${timestep}_t))"
+            else -> "((${predicateId}_${t}_u & unknown) | (~${predicateId}_${t}_u & ${predicateId}_${t}_t))"
         }
     }
 }
 
 /**
- * Encodes that the predicate it is called on is unknown at the next timestep
+ * Encodes that the predicate it is called on is unknown at the next t
  *
  * by Definition 9 in SCP19
  *
- * @param timestep predicate is unknown on (by default placeholder "I" is used)
+ * @param t predicate is unknown on (by default placeholder "I" is used)
  * @return enc(p = unknown)
  */
-fun encIsUnknown(predicateId: Int, timestep: String = "I"): String {
-    return "${predicateId}_${timestep}_u"
+fun encIsUnknown(predicateId: Int, t: String = "I"): String {
+    return "${predicateId}_${t}_u"
 }
 
 /**
- * Encodes a copy of the fact that the predicate it is called on is false at the next timestep
+ * Encodes a copy of the fact that the predicate it is called on is false at the next t
  *
  * by Definition 9 in SCP19
  *
- * @param timestep predicate is false on (by default placeholder "I" is used)
+ * @param t predicate is false on (by default placeholder "I" is used)
  * @return enc(p = false) copy
  */
-fun encIsFalseCopy(predicateId: Int, timestep: String = "I"): String {
-    return "(~${predicateId}_${timestep}_u_c & ~${predicateId}_${timestep}_t_c)"
+fun encIsFalseCopy(predicateId: Int, t: String = "I"): String {
+    return "(~${predicateId}_${t}_u_c & ~${predicateId}_${t}_t_c)"
 }
 
 /**
- * Encodes that the predicate it is called on is false at the next timestep
+ * Encodes that the predicate it is called on is false at the next t
  *
  * by Definition 9 in SCP19
 
  *
- * @param timestep predicate is false on (by default placeholder "I" is used)
+ * @param t predicate is false on (by default placeholder "I" is used)
  * @return enc(p = false)
  */
-fun encIsFalse(predicateId: Int, timestep: String = "I"): String {
-    return "(~${predicateId}_${timestep}_u & ~${predicateId}_${timestep}_t)"
+fun encIsFalse(predicateId: Int, t: String = "I"): String {
+    return "(~${predicateId}_${t}_u & ~${predicateId}_${t}_t)"
 }
 
 /**
- * Encodes a copy of the fact that the predicate it is called on is true at the next timestep
+ * Encodes a copy of the fact that the predicate it is called on is true at the next t
  *
  * by Definition 9 in SCP19
  *
- * @param timestep predicate is true on (by default placeholder "I" is used)
+ * @param t predicate is true on (by default placeholder "I" is used)
  * @return enc(p = true) copy
  */
-fun encIsTrueCopy(predicateId: Int, timestep: String = "I"): String {
-    return "(~${predicateId}_${timestep}_u_c & ${predicateId}_${timestep}_t_c)"
+fun encIsTrueCopy(predicateId: Int, t: String = "I"): String {
+    return "(~${predicateId}_${t}_u_c & ${predicateId}_${t}_t_c)"
 }
 
 /**
- * Encodes that the predicate it is called on is true at the next timestep
+ * Encodes that the predicate it is called on is true at the next t
  *
  * by Definition 9 in SCP19
  *
- * @param timestep predicate is true on (by default placeholder "I" is used)
+ * @param t predicate is true on (by default placeholder "I" is used)
  * @return enc(p = true)
  */
-fun encIsTrue(predicateId: Int, timestep: String = "I"): String {
-    return "(~${predicateId}_${timestep}_u & ${predicateId}_${timestep}_t)"
+fun encIsTrue(predicateId: Int, t: String = "I"): String {
+    return "(~${predicateId}_${t}_u & ${predicateId}_${t}_t)"
 }

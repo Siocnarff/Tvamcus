@@ -133,7 +133,8 @@ class MCTaskBuilder(propertySpecification: PropertySpecification, controlFlowGra
     }
 
     /**
-     * Encodes predicate expression "progress" over list of locations that will be used in liveness checking FG(not(progress))
+     * Encodes predicate expression "progress" over list of locations
+     * that will be used in liveness checking FG(not(progress))
      *
      * by Definitions 13 and 14 in SCP20
      *
@@ -173,12 +174,15 @@ class MCTaskBuilder(propertySpecification: PropertySpecification, controlFlowGra
      * (under fairness if and only if [PropertySpecification.fairnessON])
      *
      * @param [timestep] the timestep at which the loop closes
-     * @return liveness violation property evaluation formula to be added to formula for [timestep] of [templateTransitionSet]
+     * @return liveness violation property evaluation formula to
+     * be added to formula for [timestep] of [templateTransitionSet]
      */
     private fun livenessViolationProperty(timestep: Int): Formula {
         val bigAnd = mutableSetOf<Formula>()
         bigAnd.add(parse("rd_$timestep"))
-        encodedPredicates.forEach { bigAnd.add(parse("(${it.insertTimestep(timestep)} <=> ${it.insertTimestep(timestep)}_c)")) }
+        encodedPredicates.forEach {
+            bigAnd.add(parse("(${it.insertTimestep(timestep)} <=> ${it.insertTimestep(timestep)}_c)"))
+        }
         bigAnd.add(parse("~lv_$timestep"))
         if(propertySpec.fairnessON) {
             for(pId in cfgs.processes.indices) {
