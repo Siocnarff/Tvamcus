@@ -23,7 +23,7 @@ object CLI {
             val cfgs = getCFGS()
             val property = getPropertySpecificationOf(cfgs)
             val ev = Runner(property, cfgs)
-            ev.basicModelCheck(getBound())
+            ev.basicEvaluate(getBound())
         } catch (e: Exception) {
 
             println(e.localizedMessage)

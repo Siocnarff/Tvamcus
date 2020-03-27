@@ -24,72 +24,21 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
     private val taskBuilder: MCTaskBuilder = MCTaskBuilder(propertySpec, cfgs)
 
     /**
-     * SAT-based k-bounded model checking runs from k = 0 to [bound]+1 and no SAT-optimisations activated
+     * SAT-based k-bounded model checking runs from k = 0 to [bound]+1
      */
-    fun modelCheckNoOpt(bound: Int) {
-        val stepResults = mutableListOf<Tristate>()
-        val timestepCfgsFormulas = mutableListOf<Formula>()
-        val timeLog = TimeLog()
-
-        timestepCfgsFormulas.add(taskBuilder.initialState)
-        for (t in 0 until bound + 1) {
-            val propertyFormula = taskBuilder.propertyFormula(t)
-            print(" k(a)=$t")
-            timeLog.startLap()
-            stepResults.add(
-                timestepCfgsFormulas.evaluateConjunctedWith(property = propertyFormula, literal = "unknown")
-            )
-            timeLog.endLap()
-            printState(timeLog.lastLapTime(), stepResults.last().toString())
-            if (stepResults.last() == Tristate.TRUE) {
-                val pathInfo = resultPathInfo(t)
-                print(" k(b)=$t")
-                timeLog.startLap()
-                stepResults.add(
-                    timestepCfgsFormulas.evaluateConjunctedWith(property = propertyFormula, literal = "~unknown")
-                )
-                timeLog.endLap()
-                printState(timeLog.lastLapTime(), stepResults.last().toString())
-                if (stepResults.last() == Tristate.TRUE) {
-                    println("\nError Path")
-                    resultPathInfo(t).print()
-                    printSatisfiable(timeLog.totalTime(), t)
-                    if(propertySpec.doubleTest) {
-                        timestepCfgsFormulas.last().solveAgainWithConstraint(
-                            pathFormula(evaluationResultLiterals().pathInfo(t)), t, bound
-                        )
-                    }
-                } else {
-                    pathInfo.print()
-                    printUnknown(timeLog.totalTime(), t)
-                    if(propertySpec.doubleTest) {
-                        timestepCfgsFormulas.last().solveAgainWithConstraint(pathFormula(pathInfo), t, bound)
-                    }
-
-                }
-                return
-            }
-            timestepCfgsFormulas.add(conjunct(timestepCfgsFormulas.last(), taskBuilder.cfgAsFormula(t)))
-        }
-        timeLog.endLap()
-        printNoErrorFound(timeLog.totalTime(), bound)
-    }
-
-    fun basicModelCheck(bound: Int) {
-        val formulas = mutableListOf<Formula>()
+    fun basicEvaluate(bound: Int) {
+        val formulas = mutableSetOf<Formula>()
         formulas.add(taskBuilder.initialState)
         val timeLog = TimeLog()
 
         for (t in 0 until bound + 1) {
-            val propertyFormula = taskBuilder.propertyFormula(t)
-            if (formulas.evaluateConjunctedWith(propertyFormula, literal = "unknown") == Tristate.TRUE) {
-                val pathInfo = resultPathInfo(t)
-                if (formulas.evaluateConjunctedWith(propertyFormula, literal = "~unknown") == Tristate.TRUE) {
+            val property = taskBuilder.propertyFormula(t)
+            if (formulas.evaluateConjunctedWith(property, literal = "unknown") == Tristate.TRUE) {
+                resultPathInfo(t).print()
+                if (formulas.evaluateConjunctedWith(property, literal = "~unknown") == Tristate.TRUE) {
                     println("\nError Path")
-                    resultPathInfo(t).print()
                     printSatisfiable(timeLog.totalTime(), t)
                 } else {
-                    pathInfo.print()
                     printUnknown(timeLog.totalTime(), t)
                 }
                 return
@@ -99,56 +48,15 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
         printNoErrorFound(timeLog.totalTime(), bound)
     }
 
-    private fun MutableList<Formula>.evaluateConjunctedWith(property: Formula, literal: String): Tristate {
+    private fun MutableSet<Formula>.evaluateConjunctedWith(property: Formula, literal: String): Tristate {
+        val startTime = System.nanoTime()
         LogicNG.solver.reset()
         LogicNG.solver.add(conjunct(conjunct(this), property, parse(literal)))
-        return LogicNG.solver.sat()
+        val result = LogicNG.solver.sat()
+        val endTime = System.nanoTime()
+        printState(endTime - startTime, result.toString())
+        return result
     }
-
-    /**
-     * Experimental function
-     */
-    private fun Formula.solveAgainWithConstraint(constraint: Formula, startIndex: Int, bound: Int) {
-        println("\n=============================================================================")
-        println("============= Solving Again with constraint - restarting timer ==============")
-        println("=============================================================================\n")
-        val stepResults = mutableListOf<Tristate>()
-        val timeLog = TimeLog()
-        val formulas = mutableListOf<Formula>()
-        formulas.add(conjunct(this, constraint))
-        for (t in startIndex until bound + 1) {
-            val propertyFormula = taskBuilder.propertyFormula(t)
-            print(" k(a)=$t")
-            timeLog.startLap()
-            stepResults.add(
-                formulas.evaluateConjunctedWith(property = propertyFormula, literal = "unknown")
-            )
-            timeLog.endLap()
-            printState(timeLog.lastLapTime(), stepResults.last().toString())
-            if (stepResults.last() == Tristate.TRUE) {
-                val pathInfo = resultPathInfo(t)
-                print(" k(b)=$t")
-                timeLog.startLap()
-                stepResults.add(
-                    formulas.evaluateConjunctedWith(property = propertyFormula, literal = "~unknown")
-                )
-                timeLog.endLap()
-                printState(timeLog.lastLapTime(), stepResults.last().toString())
-                if (stepResults.last() == Tristate.TRUE) {
-                    println("\nError Path")
-                    resultPathInfo(t).print()
-                    printSatisfiable(timeLog.lastLapTime(), t)
-                } else {
-                    pathInfo.print()
-                    printUnknown(timeLog.lastLapTime(), t)
-                }
-                return
-            }
-            formulas.add(conjunct(formulas.last(), taskBuilder.cfgAsFormula(timestep = t)))
-        }
-    }
-
-
 
     /**
      * Ascertains the truth value of the variables re_i and rd_i in the SortedSet of literals
@@ -302,3 +210,92 @@ class Runner(propertySpecification: PropertySpecification, controlFlowGraphState
         }
     }
 }
+
+/*fun modelCheckNoOpt(bound: Int) {
+        val stepResults = mutableListOf<Tristate>()
+        val timestepCfgsFormulas = mutableListOf<Formula>()
+        val timeLog = TimeLog()
+
+        timestepCfgsFormulas.add(taskBuilder.initialState)
+        for (t in 0 until bound + 1) {
+            val propertyFormula = taskBuilder.propertyFormula(t)
+            print(" k(a)=$t")
+            timeLog.startLap()
+            stepResults.add(
+                timestepCfgsFormulas.evaluateConjunctedWith(property = propertyFormula, literal = "unknown")
+            )
+            timeLog.endLap()
+            printState(timeLog.lastLapTime(), stepResults.last().toString())
+            if (stepResults.last() == Tristate.TRUE) {
+                val pathInfo = resultPathInfo(t)
+                print(" k(b)=$t")
+                timeLog.startLap()
+                stepResults.add(
+                    timestepCfgsFormulas.evaluateConjunctedWith(property = propertyFormula, literal = "~unknown")
+                )
+                timeLog.endLap()
+                printState(timeLog.lastLapTime(), stepResults.last().toString())
+                if (stepResults.last() == Tristate.TRUE) {
+                    println("\nError Path")
+                    resultPathInfo(t).print()
+                    printSatisfiable(timeLog.totalTime(), t)
+                    if(propertySpec.doubleTest) {
+                        timestepCfgsFormulas.last().solveAgainWithConstraint(
+                            pathFormula(evaluationResultLiterals().pathInfo(t)), t, bound
+                        )
+                    }
+                } else {
+                    pathInfo.print()
+                    printUnknown(timeLog.totalTime(), t)
+                    if(propertySpec.doubleTest) {
+                        timestepCfgsFormulas.last().solveAgainWithConstraint(pathFormula(pathInfo), t, bound)
+                    }
+
+                }
+                return
+            }
+            timestepCfgsFormulas.add(conjunct(timestepCfgsFormulas.last(), taskBuilder.cfgAsFormula(t)))
+        }
+        timeLog.endLap()
+        printNoErrorFound(timeLog.totalTime(), bound)
+    }
+
+    private fun Formula.solveAgainWithConstraint(constraint: Formula, startIndex: Int, bound: Int) {
+        println("\n=============================================================================")
+        println("============= Solving Again with constraint - restarting timer ==============")
+        println("=============================================================================\n")
+        val stepResults = mutableListOf<Tristate>()
+        val timeLog = TimeLog()
+        val formulas = mutableListOf<Formula>()
+        formulas.add(conjunct(this, constraint))
+        for (t in startIndex until bound + 1) {
+            val propertyFormula = taskBuilder.propertyFormula(t)
+            print(" k(a)=$t")
+            timeLog.startLap()
+            stepResults.add(
+                formulas.evaluateConjunctedWith(property = propertyFormula, literal = "unknown")
+            )
+            timeLog.endLap()
+            printState(timeLog.lastLapTime(), stepResults.last().toString())
+            if (stepResults.last() == Tristate.TRUE) {
+                val pathInfo = resultPathInfo(t)
+                print(" k(b)=$t")
+                timeLog.startLap()
+                stepResults.add(
+                    formulas.evaluateConjunctedWith(property = propertyFormula, literal = "~unknown")
+                )
+                timeLog.endLap()
+                printState(timeLog.lastLapTime(), stepResults.last().toString())
+                if (stepResults.last() == Tristate.TRUE) {
+                    println("\nError Path")
+                    resultPathInfo(t).print()
+                    printSatisfiable(timeLog.lastLapTime(), t)
+                } else {
+                    pathInfo.print()
+                    printUnknown(timeLog.lastLapTime(), t)
+                }
+                return
+            }
+            formulas.add(conjunct(formulas.last(), taskBuilder.cfgAsFormula(timestep = t)))
+        }
+    }*/

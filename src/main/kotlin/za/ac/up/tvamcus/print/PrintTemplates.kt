@@ -23,7 +23,7 @@ fun printUnknown(time: Long, timestep: Int) {
 }
 
 fun printState(timeNs: Long, result: String) {
-    println(" -> ${if (result == "TRUE") "T" else "F"}   ${timeNs/1000000}ms")
+    println("${if (result == "TRUE") "True" else "False"}   ${timeNs/1000000}ms")
 }
 
 fun printNoErrorFound(time: Long, maxBound: Int) {
