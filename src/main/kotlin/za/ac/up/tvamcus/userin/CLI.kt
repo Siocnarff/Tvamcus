@@ -1,4 +1,4 @@
-package za.ac.up.tvamcus.view
+package za.ac.up.tvamcus.userin
 
 import za.ac.up.tvamcus.evaluator.Evaluator
 import za.ac.up.tvamcus.parser.Parser
@@ -7,18 +7,25 @@ import za.ac.up.tvamcus.state.cfgs.CFGS
 import java.text.ParseException
 
 object CLI {
-    @JvmStatic
-    fun main(args: Array<String>) {
-        try {
-            val testPair = getTestPair()
-            val ev = Evaluator(controlFlowGraphState = testPair.first.first(), propertySpecification = testPair.second)
-            ev.evaluateUniModel(getBound())
-        } catch (e: Exception) {
-            println(e.localizedMessage)
-        }
+
+    fun getTestPair(): Pair<MutableList<CFGS>, PropertySpecification> {
+        val mm = multiModel()
+        val cfgsList = allCFGS(mm)
+        return Pair(
+            cfgsList,
+            PropertySpecification (
+                multiModel = mm,
+                processList = commaSeparatedProcessList().extractCSList(cfgsList.first()),
+                type = type(),
+                fairnessOn = fairnessOn(),
+                operator = operator(cfgsList.first().processes.count()),
+                location = location(),
+                bound = getBound()
+            )
+        )
     }
 
-    private fun getBound(): Int {
+    fun getBound(): Int {
         do {
             print("Upper Bound: ")
             val bound = readLine()
@@ -30,23 +37,6 @@ object CLI {
                 print("Please try again - ")
             }
         } while (true)
-    }
-
-
-    private fun getTestPair(): Pair<MutableList<CFGS>, PropertySpecification> {
-        val mm = multiModel()
-        val cfgsList = allCFGS(mm)
-        return Pair(
-            cfgsList,
-            PropertySpecification (
-                multiModel = mm,
-                processList = commaSeparatedProcessList().extractCSList(cfgsList.first()),
-                type = type(),
-                fairnessOn = fairnessOn(),
-                operator = operator(cfgsList.first().processes.count()),
-                location = location()
-            )
-        )
     }
 
     private fun allCFGS(multiModel: Boolean): MutableList<CFGS> {

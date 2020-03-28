@@ -24,7 +24,7 @@ tasks {
     //}
     jar {
         manifest {
-            attributes["Main-Class"] = "za.ac.up.tvamcus.view.CLI"
+            attributes["Main-Class"] = "za.ac.up.tvamcus.runner.Runner"
         }
         from(
             configurations.compileClasspath.get().map {

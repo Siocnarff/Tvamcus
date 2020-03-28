@@ -1,4 +1,4 @@
-package za.ac.up.tvamcus.print
+package za.ac.up.tvamcus.userout
 
 fun printSatisfiable(time: Long, timestep: Int) {
     println()

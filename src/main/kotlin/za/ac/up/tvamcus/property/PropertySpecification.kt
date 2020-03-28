@@ -17,6 +17,7 @@ data class PropertySpecification(
     val location: Int,
     val processList: List<Int>,
     val operator: Char,
+    val bound: Int,
     val fairnessOn: Boolean = false,
     val multiModel: Boolean = false
 )

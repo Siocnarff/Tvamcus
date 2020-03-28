@@ -9,10 +9,10 @@ import za.ac.up.tvamcus.encoders.*
 import za.ac.up.tvamcus.logicng.conjunct
 import za.ac.up.tvamcus.logicng.parse
 import za.ac.up.tvamcus.logbook.TimeLog
-import za.ac.up.tvamcus.print.printNoErrorFound
-import za.ac.up.tvamcus.print.printSatisfiable
-import za.ac.up.tvamcus.print.printState
-import za.ac.up.tvamcus.print.printUnknown
+import za.ac.up.tvamcus.userout.printNoErrorFound
+import za.ac.up.tvamcus.userout.printSatisfiable
+import za.ac.up.tvamcus.userout.printState
+import za.ac.up.tvamcus.userout.printUnknown
 import za.ac.up.tvamcus.property.PropertySpecification
 import za.ac.up.tvamcus.state.cfgs.*
 import java.util.*
