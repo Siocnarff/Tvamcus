@@ -6,11 +6,10 @@ import za.ac.up.tvamcus.state.cfgs.CFGS
 
 class Runner(private val cfgs: List<CFGS>, private val propertySpec: PropertySpecification) {
     fun evaluate() {
+        val concrete = Evaluator(cfgs.first(), propertySpec)
         if(!propertySpec.multiModel) {
-            Evaluator(propertySpec, cfgs.first())
         } else {
-            val abstract = Evaluator(propertySpec, cfgs.last())
-            val concrete = Evaluator(propertySpec, cfgs.last())
+            val abstract = Evaluator(cfgs.last(), propertySpec)
         }
     }
 }

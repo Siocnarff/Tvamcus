@@ -13,7 +13,7 @@ import za.ac.up.tvamcus.state.cfgs.CfgsTransition
 import za.ac.up.tvamcus.state.encoded.Operation
 import za.ac.up.tvamcus.state.encoded.Transition
 
-class MCTaskBuilder(propertySpecification: PropertySpecification, controlFlowGraphState: CFGS) {
+class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: PropertySpecification) {
     private val cfgs: CFGS = controlFlowGraphState
     private val propertySpec: PropertySpecification = propertySpecification
     private val templateTransitionSet: DisjunctiveSet<Transition> = cfgs.encodeAsTemplateTransitionSet()

@@ -11,7 +11,7 @@ object CLI {
     fun main(args: Array<String>) {
         try {
             val testPair = getTestPair()
-            val ev = Evaluator(propertySpecification = testPair.second, controlFlowGraphState = testPair.first.first())
+            val ev = Evaluator(controlFlowGraphState = testPair.first.first(), propertySpecification = testPair.second)
             ev.evaluateUniModel(getBound())
         } catch (e: Exception) {
             println(e.localizedMessage)

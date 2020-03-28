@@ -18,10 +18,10 @@ import za.ac.up.tvamcus.state.cfgs.*
 import java.util.*
 import kotlin.math.pow
 
-class Evaluator(propertySpecification: PropertySpecification, controlFlowGraphState: CFGS) {
+class Evaluator(controlFlowGraphState: CFGS, propertySpecification: PropertySpecification) {
     private val cfgs: CFGS = controlFlowGraphState
     private val propertySpec: PropertySpecification = propertySpecification
-    private val taskBuilder: MCTaskBuilder = MCTaskBuilder(propertySpec, cfgs)
+    private val taskBuilder: MCTaskBuilder = MCTaskBuilder(cfgs, propertySpec)
 
     /**
      * SAT-based k-bounded model checking runs from k = 0 to [bound]+1
