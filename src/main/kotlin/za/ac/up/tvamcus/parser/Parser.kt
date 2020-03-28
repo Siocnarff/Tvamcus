@@ -8,7 +8,7 @@ import com.google.gson.JsonElement
 import com.google.gson.reflect.TypeToken
 import java.io.File
 
-object Parser {
+class Parser {
     private var predicates: MutableMap<String, Int> = mutableMapOf()
     private var init: MutableMap<String, Boolean> = mutableMapOf()
     private val processes: MutableList<Process> = mutableListOf()
@@ -16,7 +16,7 @@ object Parser {
     private fun standardize(guard: String?): String {
         if (guard == null) {
             return "${'$'}true"
-        }
+    }
         var standardGuard = ""
         var tempNot = ""
         var tempOr = ""

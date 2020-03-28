@@ -7,8 +7,19 @@ import za.ac.up.tvamcus.state.cfgs.CFGS
 import java.text.ParseException
 
 object CLI {
+    @JvmStatic
+    fun main(args: Array<String>) {
+        try {
+            val testPair = getTestPair()
+            val ev = Evaluator(controlFlowGraphState = testPair.first.first(), propertySpecification = testPair.second)
+            ev.evaluateUniModel(testPair.second.bound)
+        } catch (e: Exception) {
+            println(e.localizedMessage)
+        }
+    }
 
-    fun getTestPair(): Pair<MutableList<CFGS>, PropertySpecification> {
+
+    private fun getTestPair(): Pair<MutableList<CFGS>, PropertySpecification> {
         val mm = multiModel()
         val cfgsList = allCFGS(mm)
         return Pair(
@@ -25,7 +36,7 @@ object CLI {
         )
     }
 
-    fun getBound(): Int {
+    private fun getBound(): Int {
         do {
             print("Upper Bound: ")
             val bound = readLine()
@@ -54,7 +65,7 @@ object CLI {
             val file = readLine()
             if(file != null) {
                 try {
-                    val model = Parser.parseFile("/mnt/c/Users/josuabotha/Development/Tvamcus/inputFiles/$file.json")
+                    val model = Parser().parseFile("/mnt/c/Users/josuabotha/Development/Tvamcus/inputFiles/$file.json")
                     println("...parsed")
                     return model
                 } catch (e: ParseException) {
