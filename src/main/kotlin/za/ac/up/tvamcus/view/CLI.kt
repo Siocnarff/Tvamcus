@@ -4,20 +4,17 @@ import za.ac.up.tvamcus.evaluator.Evaluator
 import za.ac.up.tvamcus.parser.Parser
 import za.ac.up.tvamcus.property.PropertySpecification
 import za.ac.up.tvamcus.state.cfgs.CFGS
-import java.lang.IllegalArgumentException
 import java.text.ParseException
 
 object CLI {
     @JvmStatic
     fun main(args: Array<String>) {
         try {
-            val property = getPropertySpecification()
-            val ev = Evaluator(property, property.cfgs.first())
+            val testPair = getTestPair()
+            val ev = Evaluator(propertySpecification = testPair.second, controlFlowGraphState = testPair.first.first())
             ev.evaluateUniModel(getBound())
         } catch (e: Exception) {
-
             println(e.localizedMessage)
-
         }
     }
 
@@ -35,17 +32,20 @@ object CLI {
         } while (true)
     }
 
-    private fun getPropertySpecification(): PropertySpecification {
+
+    private fun getTestPair(): Pair<MutableList<CFGS>, PropertySpecification> {
         val mm = multiModel()
         val cfgsList = allCFGS(mm)
-        return PropertySpecification (
-            multiModel = mm,
-            cfgs = cfgsList,
-            processList = commaSeparatedProcessList().extractCSList(cfgsList.first()),
-            type = type(),
-            fairnessOn = fairnessOn(),
-            operator = operator(cfgsList.first().processes.count()),
-            location = location()
+        return Pair(
+            cfgsList,
+            PropertySpecification (
+                multiModel = mm,
+                processList = commaSeparatedProcessList().extractCSList(cfgsList.first()),
+                type = type(),
+                fairnessOn = fairnessOn(),
+                operator = operator(cfgsList.first().processes.count()),
+                location = location()
+            )
         )
     }
 
@@ -62,7 +62,6 @@ object CLI {
         while(true) {
             print(message)
             val file = readLine()
-            println()
             if(file != null) {
                 try {
                     val model = Parser.parseFile("/mnt/c/Users/josuabotha/Development/Tvamcus/inputFiles/$file.json")
@@ -95,7 +94,6 @@ object CLI {
             print("Target Location ")
             val response = readLine()
             if(response != null && response.toInt() >= 0) {
-                println("$response selected...")
                 return response.toInt()
             } else {
                 println("Invalid Location, please enter an Integer location ID")

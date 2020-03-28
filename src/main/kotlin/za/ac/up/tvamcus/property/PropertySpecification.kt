@@ -18,6 +18,5 @@ data class PropertySpecification(
     val processList: List<Int>,
     val operator: Char,
     val fairnessOn: Boolean = false,
-    val multiModel: Boolean = false,
-    val cfgs: MutableList<CFGS> = mutableListOf()
+    val multiModel: Boolean = false
 )

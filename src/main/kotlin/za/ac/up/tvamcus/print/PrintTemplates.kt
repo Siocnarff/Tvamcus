@@ -2,24 +2,24 @@ package za.ac.up.tvamcus.print
 
 fun printSatisfiable(time: Long, timestep: Int) {
     println()
-    println("__________________________________________________________________________________________________")
+    println("______________________________________________________________________")
     println()
     println()
-    println("                               SATISFIABLE at timestep: $timestep")
-    println("                               Time elapsed since start: ${time/1000000000}s  (${time/1000000}ms)")
+    println("                 SATISFIABLE at timestep: $timestep")
+    println("                 Time elapsed since start: ${time/1000000000}s  (${time/1000000}ms)")
     println()
-    println("__________________________________________________________________________________________________")
+    println("______________________________________________________________________")
 }
 
 fun printUnknown(time: Long, timestep: Int) {
     println()
-    println("__________________________________________________________________________________________________")
+    println("______________________________________________________________________")
     println()
     println()
-    println("                               UNKNOWN after timestep: $timestep")
-    println("                               Time elapsed since start: ${time/1000000000}s  (${time/1000000}ms)")
+    println("                UNKNOWN after timestep: $timestep")
+    println("                Time elapsed since start: ${time/1000000000}s  (${time/1000000}ms)")
     println()
-    println("__________________________________________________________________________________________________")
+    println("_______________________________________________________________________")
 }
 
 fun printState(timeNs: Long, result: String) {
