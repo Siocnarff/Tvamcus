@@ -8,9 +8,9 @@ class Runner(private val cfgs: List<CFGS>, private val propertySpec: PropertySpe
     fun evaluate() {
         if(propertySpec.multiModel) {
             val abstract = Evaluator(cfgs.last(), propertySpec)
-            abstract.evaluateUniModel(propertySpec.bound)
+            abstract.evaluate(startFrom = 0)
         }
         val concrete = Evaluator(cfgs.first(), propertySpec)
-        concrete.evaluateUniModel(propertySpec.bound)
+        concrete.evaluate(startFrom = 0)
     }
 }

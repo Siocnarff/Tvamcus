@@ -16,35 +16,39 @@ import za.ac.up.tvamcus.userout.printUnknown
 import za.ac.up.tvamcus.property.PropertySpecification
 import za.ac.up.tvamcus.state.cfgs.*
 import java.util.*
+import javax.naming.InsufficientResourcesException
 import kotlin.math.pow
 
 class Evaluator(controlFlowGraphState: CFGS, propertySpecification: PropertySpecification) {
     private val cfgs: CFGS = controlFlowGraphState
     private val propertySpec: PropertySpecification = propertySpecification
     private val taskBuilder: MCTaskBuilder = MCTaskBuilder(cfgs, propertySpec)
+    private val transitionsOverTime: MutableSet<Formula> = mutableSetOf()
 
     /**
-     * SAT-based k-bounded model checking runs from k = 0 to [bound]+1
+     * SAT-based k-bounded model checking runs from k = 0 to [propertySpec].bound +1
      */
-    fun evaluateUniModel(bound: Int) {
-        val formulas = mutableSetOf<Formula>()
-        formulas.add(taskBuilder.initialState)
+    fun evaluate(startFrom: Int = 0) {
+        if(transitionsOverTime.size < startFrom) {
+            throw InsufficientResourcesException(
+                "Cannot start from a timestep not yet reached in Evaluator.transitionsOverTime"
+            )
+        }
         val timeLog = TimeLog()
-
-        for (t in 0 until bound + 1) {
+        for (t in startFrom until propertySpec.bound + 1) {
+            transitionsOverTime.add(taskBuilder.cfgAsFormula(t))
             val property = taskBuilder.propertyFormula(t)
-            if (formulas.evaluateConjunctedWith(property, literal = "unknown") == Tristate.TRUE) {
+            if (transitionsOverTime.evaluateConjunctedWith(property, literal = "unknown") == Tristate.TRUE) {
                 resultPathInfo(t).print()
-                if (formulas.evaluateConjunctedWith(property, literal = "~unknown") == Tristate.TRUE) {
+                if (transitionsOverTime.evaluateConjunctedWith(property, literal = "~unknown") == Tristate.TRUE) {
                     printSatisfiable(timeLog.totalTime(), t)
                 } else {
                     printUnknown(timeLog.totalTime(), t)
                 }
                 return
             }
-            formulas.add(taskBuilder.cfgAsFormula(t))
         }
-        printNoErrorFound(timeLog.totalTime(), bound)
+        printNoErrorFound(timeLog.totalTime(), propertySpec.bound)
     }
 
     private fun MutableSet<Formula>.evaluateConjunctedWith(property: Formula, literal: String): Tristate {

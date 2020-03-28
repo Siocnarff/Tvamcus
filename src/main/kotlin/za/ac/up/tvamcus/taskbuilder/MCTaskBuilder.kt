@@ -18,19 +18,21 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Property
     private val propertySpec: PropertySpecification = propertySpecification
     private val templateTransitionSet: DisjunctiveSet<Transition> = cfgs.encodeAsTemplateTransitionSet()
     private val encodedPredicates: Set<String> = cfgs.deriveEncodedPredicates()
-    val initialState: Formula = init()
 
     /**
      * Creates timestep specific formula from [templateTransitionSet]
      *
      * This is an encoded timestep specific formula of the [cfgs]
      *
-     * @param timestep timestep to create formula for
-     * @return the encoded [cfgs] formula for timestep [timestep]
+     * @param upperTimestep timestep to create formula for
+     * @return the encoded [cfgs] formula for timestep [upperTimestep]
      */
-    fun cfgAsFormula(timestep: Int): Formula {
+    fun cfgAsFormula(upperTimestep: Int): Formula {
+        if(upperTimestep == 0) {
+            return init()
+        }
         val bigOr = mutableSetOf<Formula>()
-        templateTransitionSet.disjoinOver.forEach{ bigOr.add( it.asFormula(timestep) ) }
+        templateTransitionSet.disjoinOver.forEach{ bigOr.add( it.asFormula(upperTimestep - 1) ) }
         return disjoin(bigOr)
     }
 
