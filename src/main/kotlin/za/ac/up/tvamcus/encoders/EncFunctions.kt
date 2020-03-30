@@ -5,6 +5,7 @@ import za.ac.up.tvamcus.sets.ConjunctiveSet
 import za.ac.up.tvamcus.sets.DisjunctiveSet
 import za.ac.up.tvamcus.state.encoded.*
 import za.ac.up.tvamcus.state.cfgs.*
+import kotlin.math.ceil
 import kotlin.math.log2
 /**
  * Encodes all possible state space Transitions from i to I
@@ -214,7 +215,7 @@ private fun CFGS.encUnchangingPredicateValues(modifiedPredicates: MutableSet<Int
     }
     for(p in this.predicates) {
         if(!modifiedPredicates.contains(p.value)) {
-            bigAnd.add(encAssignmentChoice(p.value, "~${p.value}", "${p.value}"))
+            bigAnd.add(encAssignmentChoice(p.value, "${p.value}", "~${p.value}"))
         }
     }
     return ConjunctiveSet(bigAnd)
@@ -343,7 +344,7 @@ fun digitRequired(numLocations: Int): Int {
     return if (numLocations == 1) {
         1
     } else {
-        kotlin.math.ceil(log2(numLocations.toDouble())).toInt()
+        ceil(log2(numLocations.toDouble())).toInt()
     }
 }
 
