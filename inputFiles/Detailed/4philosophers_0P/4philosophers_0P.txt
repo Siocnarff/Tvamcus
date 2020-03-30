@@ -1,0 +1,338 @@
+Thu Jun 22 01:14:42 SAST 2017
+Max Bound: 64
+
+Performing model checking at bound 0
+Encoding formula...
+Finished encoding formula (196ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (161ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (40ms).
+
+Total time for bound 0: 397ms
+
+=============================================================================
+
+Performing model checking at bound 1
+Encoding formula...
+Finished encoding formula (56ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (104ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (85ms).
+
+Total time for bound 1: 245ms
+
+=============================================================================
+
+Performing model checking at bound 2
+Encoding formula...
+Finished encoding formula (58ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (251ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (177ms).
+
+Total time for bound 2: 486ms
+
+=============================================================================
+
+Performing model checking at bound 3
+Encoding formula...
+Finished encoding formula (155ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (240ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (229ms).
+
+Total time for bound 3: 624ms
+
+=============================================================================
+
+Performing model checking at bound 4
+Encoding formula...
+Finished encoding formula (53ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (280ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (195ms).
+
+Total time for bound 4: 528ms
+
+=============================================================================
+
+Performing model checking at bound 5
+Encoding formula...
+Finished encoding formula (34ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (312ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (256ms).
+
+Total time for bound 5: 602ms
+
+=============================================================================
+
+Performing model checking at bound 6
+Encoding formula...
+Finished encoding formula (52ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (555ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (281ms).
+
+Total time for bound 6: 888ms
+
+=============================================================================
+
+Performing model checking at bound 7
+Encoding formula...
+Finished encoding formula (29ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (795ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (370ms).
+
+Total time for bound 7: 1194ms
+
+=============================================================================
+
+Performing model checking at bound 8
+Encoding formula...
+Finished encoding formula (29ms).
+
+Checking satisfiability...
+Unknown Formula: SATISFIABLE
+True Variables:
+l_0_1_3
+l_0_1_4
+l_0_1_5
+l_0_1_6
+l_0_1_7
+l_0_1_8
+l_0_2_5
+l_0_2_6
+l_0_2_7
+l_0_2_8
+l_1_1_2
+l_1_1_3
+l_1_1_4
+l_1_1_5
+l_1_1_6
+l_1_1_7
+l_1_1_8
+l_2_1_4
+l_2_1_5
+l_2_1_6
+l_2_1_7
+l_2_1_8
+l_3_1_1
+l_3_1_2
+l_3_1_3
+l_3_1_4
+l_3_1_5
+l_3_1_6
+l_3_1_7
+l_3_1_8
+progress_0_3
+progress_0_5
+progress_1_2
+progress_1_7
+progress_2_4
+progress_2_8
+progress_3_1
+progress_3_6
+
+<0, 0, 0, 0, >	--- 3 --->
+<0, 0, 0, 2, >	--- 1 --->
+<0, 2, 0, 2, >	--- 0 --->
+<2, 2, 0, 2, >	--- 2 --->
+<2, 2, 2, 2, >	--- 0 --->
+<3, 2, 2, 2, >	--- 3 --->
+<3, 2, 2, 2, >	--- 1 --->
+<3, 2, 2, 2, >	--- 2 --->
+<3, 2, 2, 2, >
+Finished checking unknown formula (772ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (624ms).
+
+Total time for bound 8: 1425ms
+
+=============================================================================
+
+
+Variable Mappings:
+=====================================
+| x270886         | progress_0_0    |
+| x299672         | l_1_1_8         |
+| x295568         | l_1_1_7         |
+| x270888         | progress_0_2    |
+| x275048         | l_1_1_2         |
+| x270887         | progress_0_1    |
+| x270944         | l_1_1_1         |
+| x270890         | progress_0_4    |
+| x270926         | l_1_1_0         |
+| x270889         | progress_0_3    |
+| x270892         | progress_0_6    |
+| x291464         | l_1_1_6         |
+| x270891         | progress_0_5    |
+| x287360         | l_1_1_5         |
+| x270894         | progress_0_8    |
+| x283256         | l_1_1_4         |
+| x270893         | progress_0_7    |
+| x279152         | l_1_1_3         |
+| x287432         | l_3_1_5         |
+| x291536         | l_3_1_6         |
+| x295640         | l_3_1_7         |
+| x299744         | l_3_1_8         |
+| x270932         | l_3_1_0         |
+| x271016         | l_3_1_1         |
+| x275120         | l_3_1_2         |
+| x279224         | l_3_1_3         |
+| x283328         | l_3_1_4         |
+| x299665         | l_0_2_8         |
+| x295561         | l_0_2_7         |
+| x283249         | l_0_2_4         |
+| x279145         | l_0_2_3         |
+| x291457         | l_0_2_6         |
+| x287353         | l_0_2_5         |
+| x270922         | l_0_2_0         |
+| x275041         | l_0_2_2         |
+| x270937         | l_0_2_1         |
+| x270903         | progress_1_8    |
+| x299673         | l_1_0_8         |
+| x270896         | progress_1_1    |
+| x279153         | l_1_0_3         |
+| x270895         | progress_1_0    |
+| x275049         | l_1_0_2         |
+| x270898         | progress_1_3    |
+| x270945         | l_1_0_1         |
+| x270897         | progress_1_2    |
+| x270927         | l_1_0_0         |
+| x270900         | progress_1_5    |
+| x295569         | l_1_0_7         |
+| x270899         | progress_1_4    |
+| x291465         | l_1_0_6         |
+| x270902         | progress_1_7    |
+| x287361         | l_1_0_5         |
+| x270901         | progress_1_6    |
+| x283257         | l_1_0_4         |
+| x291499         | l_2_2_6         |
+| x287395         | l_2_2_5         |
+| x299707         | l_2_2_8         |
+| x295603         | l_2_2_7         |
+| x270928         | l_2_2_0         |
+| x275083         | l_2_2_2         |
+| x270979         | l_2_2_1         |
+| x283291         | l_2_2_4         |
+| x279187         | l_2_2_3         |
+| x291537         | l_3_0_6         |
+| x295641         | l_3_0_7         |
+| x299745         | l_3_0_8         |
+| x270933         | l_3_0_0         |
+| x271017         | l_3_0_1         |
+| x275121         | l_3_0_2         |
+| x279225         | l_3_0_3         |
+| x283329         | l_3_0_4         |
+| x287433         | l_3_0_5         |
+| x299666         | l_0_1_8         |
+| x287354         | l_0_1_5         |
+| x283250         | l_0_1_4         |
+| x295562         | l_0_1_7         |
+| x291458         | l_0_1_6         |
+| x270938         | l_0_1_1         |
+| x270923         | l_0_1_0         |
+| x279146         | l_0_1_3         |
+| x275042         | l_0_1_2         |
+| x270912         | progress_2_8    |
+| x270911         | progress_2_7    |
+| x270904         | progress_2_0    |
+| x270906         | progress_2_2    |
+| x270905         | progress_2_1    |
+| x270908         | progress_2_4    |
+| x270907         | progress_2_3    |
+| x270910         | progress_2_6    |
+| x270909         | progress_2_5    |
+| x295604         | l_2_1_7         |
+| x291500         | l_2_1_6         |
+| x299708         | l_2_1_8         |
+| x270980         | l_2_1_1         |
+| x270929         | l_2_1_0         |
+| x279188         | l_2_1_3         |
+| x275084         | l_2_1_2         |
+| x287396         | l_2_1_5         |
+| x283292         | l_2_1_4         |
+| x270924         | l_0_0_0         |
+| x291459         | l_0_0_6         |
+| x287355         | l_0_0_5         |
+| x299667         | l_0_0_8         |
+| x295563         | l_0_0_7         |
+| x275043         | l_0_0_2         |
+| x270939         | l_0_0_1         |
+| x283251         | l_0_0_4         |
+| x279147         | l_0_0_3         |
+| x270920         | progress_3_7    |
+| x270919         | progress_3_6    |
+| x299671         | l_1_2_8         |
+| x295567         | l_1_2_7         |
+| x270921         | progress_3_8    |
+| x291463         | l_1_2_6         |
+| x270943         | l_1_2_1         |
+| x270925         | l_1_2_0         |
+| x270914         | progress_3_1    |
+| x270913         | progress_3_0    |
+| x270916         | progress_3_3    |
+| x287359         | l_1_2_5         |
+| x270915         | progress_3_2    |
+| x283255         | l_1_2_4         |
+| x270918         | progress_3_5    |
+| x279151         | l_1_2_3         |
+| x270917         | progress_3_4    |
+| x275047         | l_1_2_2         |
+| x299709         | l_2_0_8         |
+| x295605         | l_2_0_7         |
+| x270930         | l_2_0_0         |
+| x275085         | l_2_0_2         |
+| x270981         | l_2_0_1         |
+| x283293         | l_2_0_4         |
+| x279189         | l_2_0_3         |
+| x291501         | l_2_0_6         |
+| x287397         | l_2_0_5         |
+| x283327         | l_3_2_4         |
+| x287431         | l_3_2_5         |
+| x291535         | l_3_2_6         |
+| x295639         | l_3_2_7         |
+| x299743         | l_3_2_8         |
+| x270931         | l_3_2_0         |
+| x271015         | l_3_2_1         |
+| x275119         | l_3_2_2         |
+| x279223         | l_3_2_3         |
+=====================================
+
+Overall Time: 6389 ms
+Refinement necessary. Exiting...

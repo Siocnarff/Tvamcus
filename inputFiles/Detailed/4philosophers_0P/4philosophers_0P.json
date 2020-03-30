@@ -1,0 +1,333 @@
+{
+  "predicates": {},
+  "processes": [
+    {
+      "states": [
+        {
+          "transitions": [
+            {
+              "source": 0,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(true, false)"
+            },
+            {
+              "source": 0,
+              "destination": 1,
+              "assignments": [],
+              "guard": "choice(false, true)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 1,
+              "destination": 1,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 2,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(false, false)"
+            },
+            {
+              "source": 2,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice(false, false)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 3,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice(false, false)"
+            },
+            {
+              "source": 3,
+              "destination": 4,
+              "assignments": [],
+              "guard": "choice(false, false)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 4,
+              "destination": 5,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 5,
+              "destination": 0,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "states": [
+        {
+          "transitions": [
+            {
+              "source": 0,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(true, false)"
+            },
+            {
+              "source": 0,
+              "destination": 1,
+              "assignments": [],
+              "guard": "choice(false, true)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 1,
+              "destination": 1,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 2,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(false, false)"
+            },
+            {
+              "source": 2,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice(false, false)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 3,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice(false, false)"
+            },
+            {
+              "source": 3,
+              "destination": 4,
+              "assignments": [],
+              "guard": "choice(false, false)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 4,
+              "destination": 5,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 5,
+              "destination": 0,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "states": [
+        {
+          "transitions": [
+            {
+              "source": 0,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(true, false)"
+            },
+            {
+              "source": 0,
+              "destination": 1,
+              "assignments": [],
+              "guard": "choice(false, true)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 1,
+              "destination": 1,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 2,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(false, false)"
+            },
+            {
+              "source": 2,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice(false, false)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 3,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice(false, false)"
+            },
+            {
+              "source": 3,
+              "destination": 4,
+              "assignments": [],
+              "guard": "choice(false, false)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 4,
+              "destination": 5,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 5,
+              "destination": 0,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "states": [
+        {
+          "transitions": [
+            {
+              "source": 0,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(true, false)"
+            },
+            {
+              "source": 0,
+              "destination": 1,
+              "assignments": [],
+              "guard": "choice(false, true)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 1,
+              "destination": 1,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 2,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(false, false)"
+            },
+            {
+              "source": 2,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice(false, false)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 3,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice(false, false)"
+            },
+            {
+              "source": 3,
+              "destination": 4,
+              "assignments": [],
+              "guard": "choice(false, false)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 4,
+              "destination": 5,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 5,
+              "destination": 0,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

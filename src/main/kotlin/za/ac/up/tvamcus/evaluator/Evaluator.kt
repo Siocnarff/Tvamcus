@@ -57,17 +57,18 @@ class Evaluator(controlFlowGraphState: CFGS, propertySpecification: PropertySpec
     }
 
     fun evaluate(constraint: MutableSet<Formula>, k: Int, startFrom: Int = 0): Pair<Tristate, MutableList<State>> {
+        println("Begin Again")
         //val timeLog = TimeLog()
         for (t in startFrom..k) {
-            println(t)
             run.add(taskBuilder.cfgAsFormula(t))
         }
         val property = taskBuilder.propertyFormula(k)
         if (run.evaluateConjunctedWith(property, constraint, literal = "unknown") == Tristate.TRUE) {
             val path = resultPathInfo(k)
-            if (run.evaluateConjunctedWith(property, constraint, literal = "~unknown") == Tristate.UNDEF) {
+            val result = run.evaluateConjunctedWith(property, constraint, literal = "~unknown")
+            if (result == Tristate.UNDEF) {
                 throw IllegalArgumentException("Not supposed to have unknown here, ensure CFGS contains ALL predicates")
-            } else if(run.evaluateConjunctedWith(property, constraint, literal = "~unknown") == Tristate.TRUE) {
+            } else if(result == Tristate.TRUE) {
                 return Pair(Tristate.TRUE, path)
             }
         }
@@ -156,8 +157,8 @@ class Evaluator(controlFlowGraphState: CFGS, propertySpecification: PropertySpec
      * @param [timestep] timestep to find process locations for
      * @return list of strings denoting the timestep [timestep] location of each process
      */
-    private fun SortedSet<Literal>.locationEvaluation(timestep: Int): MutableList<String> {
-        val processLocations = mutableListOf<String>()
+    private fun SortedSet<Literal>.locationEvaluation(timestep: Int): MutableList<Pair<Int, Int>> {
+        val processLocations = mutableListOf<Pair<Int, Int>>()
         for (process in cfgs.processes) {
             var processLocation = ""
             for(d in 0 until digitRequired(process.numberOfLocations())) {
@@ -169,7 +170,7 @@ class Evaluator(controlFlowGraphState: CFGS, propertySpecification: PropertySpec
                     "1"
                 }
             }
-            processLocations.add(processLocation)
+            processLocations.add(Pair(process.id, processLocation.toInt()))
         }
         return processLocations
     }
@@ -179,7 +180,7 @@ class Evaluator(controlFlowGraphState: CFGS, propertySpecification: PropertySpec
         for(k in 0 until bound + 1) {
             steps.add(
                 State(
-                    k,
+                    k.toString(),
                     this.locationEvaluation(k),
                     this.predicateEvaluation(k),
                     this.fairnessEvaluation(k),

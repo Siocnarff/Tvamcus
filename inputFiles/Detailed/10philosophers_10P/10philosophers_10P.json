@@ -1,0 +1,1036 @@
+{
+  "predicates": {
+    "(c = -1)": 2,
+    "(f = -1)": 5,
+    "(i = -1)": 8,
+    "(e = -1)": 4,
+    "(g = -1)": 6,
+    "(a = -1)": 0,
+    "(d = -1)": 3,
+    "(b = -1)": 1,
+    "(j = -1)": 9,
+    "(h = -1)": 7
+  },
+  "processes": [
+    {
+      "states": [
+        {
+          "transitions": [
+            {
+              "source": 0,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(true, false)"
+            },
+            {
+              "source": 0,
+              "destination": 1,
+              "assignments": [],
+              "guard": "choice(false, true)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 1,
+              "destination": 1,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 2,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice((not (a = -1)), (a = -1))"
+            },
+            {
+              "source": 2,
+              "destination": 3,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 0
+                }
+              ],
+              "guard": "choice((a = -1), (not (a = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 3,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice((not (b = -1)), (b = -1))"
+            },
+            {
+              "source": 3,
+              "destination": 4,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 1
+                }
+              ],
+              "guard": "choice((b = -1), (not (b = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 4,
+              "destination": 5,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 0
+                }
+              ],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 5,
+              "destination": 0,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 1
+                }
+              ],
+              "guard": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "states": [
+        {
+          "transitions": [
+            {
+              "source": 0,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(true, false)"
+            },
+            {
+              "source": 0,
+              "destination": 1,
+              "assignments": [],
+              "guard": "choice(false, true)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 1,
+              "destination": 1,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 2,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice((not (b = -1)), (b = -1))"
+            },
+            {
+              "source": 2,
+              "destination": 3,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 1
+                }
+              ],
+              "guard": "choice((b = -1), (not (b = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 3,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice((not (c = -1)), (c = -1))"
+            },
+            {
+              "source": 3,
+              "destination": 4,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 2
+                }
+              ],
+              "guard": "choice((c = -1), (not (c = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 4,
+              "destination": 5,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 1
+                }
+              ],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 5,
+              "destination": 0,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 2
+                }
+              ],
+              "guard": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "states": [
+        {
+          "transitions": [
+            {
+              "source": 0,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(true, false)"
+            },
+            {
+              "source": 0,
+              "destination": 1,
+              "assignments": [],
+              "guard": "choice(false, true)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 1,
+              "destination": 1,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 2,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice((not (c = -1)), (c = -1))"
+            },
+            {
+              "source": 2,
+              "destination": 3,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 2
+                }
+              ],
+              "guard": "choice((c = -1), (not (c = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 3,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice((not (d = -1)), (d = -1))"
+            },
+            {
+              "source": 3,
+              "destination": 4,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 3
+                }
+              ],
+              "guard": "choice((d = -1), (not (d = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 4,
+              "destination": 5,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 2
+                }
+              ],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 5,
+              "destination": 0,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 3
+                }
+              ],
+              "guard": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "states": [
+        {
+          "transitions": [
+            {
+              "source": 0,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(true, false)"
+            },
+            {
+              "source": 0,
+              "destination": 1,
+              "assignments": [],
+              "guard": "choice(false, true)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 1,
+              "destination": 1,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 2,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice((not (d = -1)), (d = -1))"
+            },
+            {
+              "source": 2,
+              "destination": 3,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 3
+                }
+              ],
+              "guard": "choice((d = -1), (not (d = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 3,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice((not (e = -1)), (e = -1))"
+            },
+            {
+              "source": 3,
+              "destination": 4,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 4
+                }
+              ],
+              "guard": "choice((e = -1), (not (e = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 4,
+              "destination": 5,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 3
+                }
+              ],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 5,
+              "destination": 0,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 4
+                }
+              ],
+              "guard": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "states": [
+        {
+          "transitions": [
+            {
+              "source": 0,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(true, false)"
+            },
+            {
+              "source": 0,
+              "destination": 1,
+              "assignments": [],
+              "guard": "choice(false, true)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 1,
+              "destination": 1,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 2,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice((not (e = -1)), (e = -1))"
+            },
+            {
+              "source": 2,
+              "destination": 3,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 4
+                }
+              ],
+              "guard": "choice((e = -1), (not (e = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 3,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice((not (f = -1)), (f = -1))"
+            },
+            {
+              "source": 3,
+              "destination": 4,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 5
+                }
+              ],
+              "guard": "choice((f = -1), (not (f = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 4,
+              "destination": 5,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 4
+                }
+              ],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 5,
+              "destination": 0,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 5
+                }
+              ],
+              "guard": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "states": [
+        {
+          "transitions": [
+            {
+              "source": 0,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(true, false)"
+            },
+            {
+              "source": 0,
+              "destination": 1,
+              "assignments": [],
+              "guard": "choice(false, true)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 1,
+              "destination": 1,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 2,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice((not (f = -1)), (f = -1))"
+            },
+            {
+              "source": 2,
+              "destination": 3,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 5
+                }
+              ],
+              "guard": "choice((f = -1), (not (f = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 3,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice((not (g = -1)), (g = -1))"
+            },
+            {
+              "source": 3,
+              "destination": 4,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 6
+                }
+              ],
+              "guard": "choice((g = -1), (not (g = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 4,
+              "destination": 5,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 5
+                }
+              ],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 5,
+              "destination": 0,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 6
+                }
+              ],
+              "guard": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "states": [
+        {
+          "transitions": [
+            {
+              "source": 0,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(true, false)"
+            },
+            {
+              "source": 0,
+              "destination": 1,
+              "assignments": [],
+              "guard": "choice(false, true)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 1,
+              "destination": 1,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 2,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice((not (g = -1)), (g = -1))"
+            },
+            {
+              "source": 2,
+              "destination": 3,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 6
+                }
+              ],
+              "guard": "choice((g = -1), (not (g = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 3,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice((not (h = -1)), (h = -1))"
+            },
+            {
+              "source": 3,
+              "destination": 4,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 7
+                }
+              ],
+              "guard": "choice((h = -1), (not (h = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 4,
+              "destination": 5,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 6
+                }
+              ],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 5,
+              "destination": 0,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 7
+                }
+              ],
+              "guard": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "states": [
+        {
+          "transitions": [
+            {
+              "source": 0,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(true, false)"
+            },
+            {
+              "source": 0,
+              "destination": 1,
+              "assignments": [],
+              "guard": "choice(false, true)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 1,
+              "destination": 1,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 2,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice((not (h = -1)), (h = -1))"
+            },
+            {
+              "source": 2,
+              "destination": 3,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 7
+                }
+              ],
+              "guard": "choice((h = -1), (not (h = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 3,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice((not (i = -1)), (i = -1))"
+            },
+            {
+              "source": 3,
+              "destination": 4,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 8
+                }
+              ],
+              "guard": "choice((i = -1), (not (i = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 4,
+              "destination": 5,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 7
+                }
+              ],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 5,
+              "destination": 0,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 8
+                }
+              ],
+              "guard": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "states": [
+        {
+          "transitions": [
+            {
+              "source": 0,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(true, false)"
+            },
+            {
+              "source": 0,
+              "destination": 1,
+              "assignments": [],
+              "guard": "choice(false, true)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 1,
+              "destination": 1,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 2,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice((not (i = -1)), (i = -1))"
+            },
+            {
+              "source": 2,
+              "destination": 3,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 8
+                }
+              ],
+              "guard": "choice((i = -1), (not (i = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 3,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice((not (j = -1)), (j = -1))"
+            },
+            {
+              "source": 3,
+              "destination": 4,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 9
+                }
+              ],
+              "guard": "choice((j = -1), (not (j = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 4,
+              "destination": 5,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 8
+                }
+              ],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 5,
+              "destination": 0,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 9
+                }
+              ],
+              "guard": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "states": [
+        {
+          "transitions": [
+            {
+              "source": 0,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice(true, false)"
+            },
+            {
+              "source": 0,
+              "destination": 1,
+              "assignments": [],
+              "guard": "choice(false, true)"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 1,
+              "destination": 1,
+              "assignments": [],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 2,
+              "destination": 2,
+              "assignments": [],
+              "guard": "choice((not (j = -1)), (j = -1))"
+            },
+            {
+              "source": 2,
+              "destination": 3,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 9
+                }
+              ],
+              "guard": "choice((j = -1), (not (j = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 3,
+              "destination": 3,
+              "assignments": [],
+              "guard": "choice((not (a = -1)), (a = -1))"
+            },
+            {
+              "source": 3,
+              "destination": 4,
+              "assignments": [
+                {
+                  "RHS": "choice(false, true)",
+                  "predicate": 0
+                }
+              ],
+              "guard": "choice((a = -1), (not (a = -1)))"
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 4,
+              "destination": 5,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 9
+                }
+              ],
+              "guard": null
+            }
+          ]
+        },
+        {
+          "transitions": [
+            {
+              "source": 5,
+              "destination": 0,
+              "assignments": [
+                {
+                  "RHS": "choice(true, false)",
+                  "predicate": 0
+                }
+              ],
+              "guard": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

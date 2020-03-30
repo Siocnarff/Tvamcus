@@ -1,0 +1,266 @@
+Mon Jun 26 20:47:36 SAST 2017
+Max Bound: 200
+
+Performing model checking at bound 1
+Encoding formula...
+Finished encoding formula (381ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (1351ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (539ms).
+
+Total time for bound 1: 2271ms
+
+=============================================================================
+
+Performing model checking at bound 2
+Encoding formula...
+Finished encoding formula (79ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (1595ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (513ms).
+
+Total time for bound 2: 2187ms
+
+=============================================================================
+
+Performing model checking at bound 3
+Encoding formula...
+Finished encoding formula (86ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (1774ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (665ms).
+
+Total time for bound 3: 2525ms
+
+=============================================================================
+
+Performing model checking at bound 4
+Encoding formula...
+Finished encoding formula (124ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (2678ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (930ms).
+
+Total time for bound 4: 3732ms
+
+=============================================================================
+
+Performing model checking at bound 5
+Encoding formula...
+Finished encoding formula (74ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (4644ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (1456ms).
+
+Total time for bound 5: 6174ms
+
+=============================================================================
+
+Performing model checking at bound 6
+Encoding formula...
+Finished encoding formula (95ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (6510ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (1843ms).
+
+Total time for bound 6: 8448ms
+
+=============================================================================
+
+Performing model checking at bound 7
+Encoding formula...
+Finished encoding formula (82ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (7807ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (2383ms).
+
+Total time for bound 7: 10272ms
+
+=============================================================================
+
+Performing model checking at bound 8
+Encoding formula...
+Finished encoding formula (89ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (42101ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (3110ms).
+
+Total time for bound 8: 45300ms
+
+=============================================================================
+
+Performing model checking at bound 9
+Encoding formula...
+Finished encoding formula (96ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (12946ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (4345ms).
+
+Total time for bound 9: 17387ms
+
+=============================================================================
+
+Performing model checking at bound 10
+Encoding formula...
+Finished encoding formula (106ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (115550ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (4506ms).
+
+Total time for bound 10: 120162ms
+
+=============================================================================
+
+Performing model checking at bound 11
+Encoding formula...
+Finished encoding formula (92ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (23395ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (5328ms).
+
+Total time for bound 11: 28815ms
+
+=============================================================================
+
+Performing model checking at bound 12
+Encoding formula...
+Finished encoding formula (94ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (174080ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (5789ms).
+
+Total time for bound 12: 179963ms
+
+=============================================================================
+
+Performing model checking at bound 13
+Encoding formula...
+Finished encoding formula (101ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (69570ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (5250ms).
+
+Total time for bound 13: 74921ms
+
+=============================================================================
+
+Performing model checking at bound 14
+Encoding formula...
+Finished encoding formula (112ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (355100ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (6034ms).
+
+Total time for bound 14: 361246ms
+
+=============================================================================
+
+Performing model checking at bound 15
+Encoding formula...
+Finished encoding formula (196ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (795706ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (9167ms).
+
+Total time for bound 15: 805069ms
+
+=============================================================================
+
+Performing model checking at bound 16
+Encoding formula...
+Finished encoding formula (148ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (2957214ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (10023ms).
+
+Total time for bound 16: 2967385ms
+
+=============================================================================
+
+Performing model checking at bound 17
+Encoding formula...
+Finished encoding formula (145ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (10786137ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (10561ms).
+
+Total time for bound 17: 10796843ms
+
+=============================================================================
+
+Performing model checking at bound 18
+Encoding formula...
+Finished encoding formula (251ms).
+
+Checking satisfiability...
+Unknown Formula:
+
+Forcefully terminated on Mon Jun 27 06:01:05 SAST 2017

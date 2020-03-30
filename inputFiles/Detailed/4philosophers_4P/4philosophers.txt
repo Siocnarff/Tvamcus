@@ -1,0 +1,645 @@
+Wed Jun 21 13:21:41 SAST 2017
+Max Bound: 100
+
+Performing model checking at bound 1
+Encoding formula...
+Finished encoding formula (263ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (381ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (138ms).
+
+Total time: 782ms
+Performing model checking at bound 2
+Encoding formula...
+Finished encoding formula (111ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (331ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (211ms).
+
+Total time: 653ms
+Performing model checking at bound 3
+Encoding formula...
+Finished encoding formula (89ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (325ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (281ms).
+
+Total time: 695ms
+Performing model checking at bound 4
+Encoding formula...
+Finished encoding formula (69ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (394ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (375ms).
+
+Total time: 838ms
+Performing model checking at bound 5
+Encoding formula...
+Finished encoding formula (60ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (473ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (470ms).
+
+Total time: 1003ms
+Performing model checking at bound 6
+Encoding formula...
+Finished encoding formula (58ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (717ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (541ms).
+
+Total time: 1316ms
+Performing model checking at bound 7
+Encoding formula...
+Finished encoding formula (46ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (955ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (765ms).
+
+Total time: 1766ms
+Performing model checking at bound 8
+Encoding formula...
+Finished encoding formula (65ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (1509ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (1468ms).
+
+Total time: 3042ms
+Performing model checking at bound 9
+Encoding formula...
+Finished encoding formula (53ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (2240ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (2188ms).
+
+Total time: 4481ms
+Performing model checking at bound 10
+Encoding formula...
+Finished encoding formula (53ms).
+
+Checking satisfiability...
+Unknown Formula: NOT SATISFIABLE
+Finished checking unknown formula (8238ms).
+
+Not Unknown Formula: NOT SATISFIABLE
+Finished checking not unknown formula (5335ms).
+
+Total time: 13626ms
+Performing model checking at bound 11
+Encoding formula...
+Finished encoding formula (42ms).
+
+Checking satisfiability...
+Unknown Formula: SATISFIABLE
+True Variables:
+l_0_1_10
+l_0_1_11
+l_0_1_5
+l_0_1_6
+l_0_1_7
+l_0_1_8
+l_0_1_9
+l_0_2_10
+l_0_2_11
+l_0_2_8
+l_0_2_9
+l_1_1_1
+l_1_1_10
+l_1_1_11
+l_1_1_2
+l_1_1_3
+l_1_1_4
+l_1_1_5
+l_1_1_6
+l_1_1_7
+l_1_1_8
+l_1_1_9
+l_1_2_10
+l_1_2_11
+l_1_2_2
+l_1_2_3
+l_1_2_4
+l_1_2_5
+l_1_2_6
+l_1_2_7
+l_1_2_8
+l_1_2_9
+l_2_1_10
+l_2_1_11
+l_2_1_3
+l_2_1_4
+l_2_1_5
+l_2_1_6
+l_2_1_7
+l_2_1_8
+l_2_1_9
+l_2_2_10
+l_2_2_11
+l_2_2_7
+l_2_2_8
+l_2_2_9
+l_3_1_10
+l_3_1_11
+l_3_1_4
+l_3_1_5
+l_3_1_6
+l_3_1_7
+l_3_1_8
+l_3_1_9
+l_3_2_10
+l_3_2_11
+l_3_2_6
+l_3_2_7
+l_3_2_8
+l_3_2_9
+p_0_0_b
+p_0_1_b
+p_0_2_b
+p_0_3_b
+p_0_4_b
+p_0_5_b
+p_0_6_b
+p_0_7_b
+p_1_0_b
+p_1_1_b
+p_2_0_b
+p_2_1_b
+p_2_2_b
+p_2_3_b
+p_2_4_b
+p_2_5_b
+p_2_6_b
+p_3_0_b
+p_3_1_b
+p_3_2_b
+p_3_3_b
+p_3_4_b
+p_3_5_b
+progress_0_5
+progress_0_8
+progress_1_1
+progress_1_2
+progress_1_9
+progress_2_11
+progress_2_3
+progress_2_7
+progress_3_10
+progress_3_4
+progress_3_6
+
+<0, 0, 0, 0, (a = -1)=t, (b = -1)=t, (c = -1)=t, (d = -1)=t>	--- 1 --->
+<0, 2, 0, 0, (a = -1)=t, (b = -1)=t, (c = -1)=t, (d = -1)=t>	--- 1 --->
+<0, 3, 0, 0, (a = -1)=t, (b = -1)=f, (c = -1)=t, (d = -1)=t>	--- 2 --->
+<0, 3, 2, 0, (a = -1)=t, (b = -1)=f, (c = -1)=t, (d = -1)=t>	--- 3 --->
+<0, 3, 2, 2, (a = -1)=t, (b = -1)=f, (c = -1)=t, (d = -1)=t>	--- 0 --->
+<2, 3, 2, 2, (a = -1)=t, (b = -1)=f, (c = -1)=t, (d = -1)=t>	--- 3 --->
+<2, 3, 2, 3, (a = -1)=t, (b = -1)=f, (c = -1)=t, (d = -1)=f>	--- 2 --->
+<2, 3, 3, 3, (a = -1)=t, (b = -1)=f, (c = -1)=f, (d = -1)=f>	--- 0 --->
+<3, 3, 3, 3, (a = -1)=f, (b = -1)=f, (c = -1)=f, (d = -1)=f>	--- 1 --->
+<3, 3, 3, 3, (a = -1)=f, (b = -1)=f, (c = -1)=f, (d = -1)=f>	--- 3 --->
+<3, 3, 3, 3, (a = -1)=f, (b = -1)=f, (c = -1)=f, (d = -1)=f>	--- 2 --->
+<3, 3, 3, 3, (a = -1)=f, (b = -1)=f, (c = -1)=f, (d = -1)=f>
+Finished checking unknown formula (1990ms).
+
+Not Unknown Formula: SATISFIABLE
+True Variables:
+l_0_1_10
+l_0_1_11
+l_0_1_6
+l_0_1_7
+l_0_1_8
+l_0_1_9
+l_0_2_10
+l_0_2_11
+l_0_2_8
+l_0_2_9
+l_1_1_10
+l_1_1_11
+l_1_1_2
+l_1_1_3
+l_1_1_4
+l_1_1_5
+l_1_1_6
+l_1_1_7
+l_1_1_8
+l_1_1_9
+l_1_2_10
+l_1_2_11
+l_1_2_5
+l_1_2_6
+l_1_2_7
+l_1_2_8
+l_1_2_9
+l_2_1_10
+l_2_1_11
+l_2_1_3
+l_2_1_4
+l_2_1_5
+l_2_1_6
+l_2_1_7
+l_2_1_8
+l_2_1_9
+l_2_2_10
+l_2_2_11
+l_2_2_4
+l_2_2_5
+l_2_2_6
+l_2_2_7
+l_2_2_8
+l_2_2_9
+l_3_1_1
+l_3_1_10
+l_3_1_11
+l_3_1_2
+l_3_1_3
+l_3_1_4
+l_3_1_5
+l_3_1_6
+l_3_1_7
+l_3_1_8
+l_3_1_9
+l_3_2_10
+l_3_2_11
+l_3_2_7
+l_3_2_8
+l_3_2_9
+p_0_0_b
+p_0_1_b
+p_0_2_b
+p_0_3_b
+p_0_4_b
+p_0_5_b
+p_0_6_b
+p_0_7_b
+p_1_0_b
+p_1_1_b
+p_1_2_b
+p_1_3_b
+p_1_4_b
+p_2_0_b
+p_2_1_b
+p_2_2_b
+p_2_3_b
+p_3_0_b
+p_3_1_b
+p_3_2_b
+p_3_3_b
+p_3_4_b
+p_3_5_b
+p_3_6_b
+progress_0_6
+progress_0_8
+progress_1_10
+progress_1_2
+progress_1_5
+progress_2_11
+progress_2_3
+progress_2_4
+progress_3_1
+progress_3_7
+progress_3_9
+
+<0, 0, 0, 0, (a = -1)=t, (b = -1)=t, (c = -1)=t, (d = -1)=t>	--- 3 --->
+<0, 0, 0, 2, (a = -1)=t, (b = -1)=t, (c = -1)=t, (d = -1)=t>	--- 1 --->
+<0, 2, 0, 2, (a = -1)=t, (b = -1)=t, (c = -1)=t, (d = -1)=t>	--- 2 --->
+<0, 2, 2, 2, (a = -1)=t, (b = -1)=t, (c = -1)=t, (d = -1)=t>	--- 2 --->
+<0, 2, 3, 2, (a = -1)=t, (b = -1)=t, (c = -1)=f, (d = -1)=t>	--- 1 --->
+<0, 3, 3, 2, (a = -1)=t, (b = -1)=f, (c = -1)=f, (d = -1)=t>	--- 0 --->
+<2, 3, 3, 2, (a = -1)=t, (b = -1)=f, (c = -1)=f, (d = -1)=t>	--- 3 --->
+<2, 3, 3, 3, (a = -1)=t, (b = -1)=f, (c = -1)=f, (d = -1)=f>	--- 0 --->
+<3, 3, 3, 3, (a = -1)=f, (b = -1)=f, (c = -1)=f, (d = -1)=f>	--- 3 --->
+<3, 3, 3, 3, (a = -1)=f, (b = -1)=f, (c = -1)=f, (d = -1)=f>	--- 1 --->
+<3, 3, 3, 3, (a = -1)=f, (b = -1)=f, (c = -1)=f, (d = -1)=f>	--- 2 --->
+<3, 3, 3, 3, (a = -1)=f, (b = -1)=f, (c = -1)=f, (d = -1)=f>
+Finished checking not unknown formula (2748ms).
+
+Total time: 4780ms
+
+Variable Mappings:
+=====================================
+| x713732         | p_2_9_b         |
+| x704346         | p_3_7_u         |
+| x675979         | progress_0_0    |
+| x723124         | p_2_11_b        |
+| x676162         | p_2_1_u         |
+| x676025         | progress_3_10   |
+| x685568         | p_1_3_b         |
+| x676026         | progress_3_11   |
+| x675988         | progress_0_9    |
+| x713730         | p_2_9_u         |
+| x675981         | progress_0_2    |
+| x675980         | progress_0_1    |
+| x675983         | progress_0_4    |
+| x675982         | progress_0_3    |
+| x675985         | progress_0_6    |
+| x694952         | p_0_5_b         |
+| x675984         | progress_0_5    |
+| x675987         | progress_0_8    |
+| x675986         | progress_0_7    |
+| x723122         | p_2_11_u        |
+| x699646         | p_0_6_u         |
+| x699652         | p_3_6_b         |
+| x694913         | l_3_1_5         |
+| x718321         | l_1_1_10        |
+| x699609         | l_3_1_6         |
+| x723017         | l_1_1_11        |
+| x704305         | l_3_1_7         |
+| x709001         | l_3_1_8         |
+| x713697         | l_3_1_9         |
+| x676040         | p_2_0_b         |
+| x690262         | p_1_4_u         |
+| x676037         | l_3_1_0         |
+| x676129         | l_3_1_1         |
+| x680825         | l_3_1_2         |
+| x709036         | p_2_8_b         |
+| x685521         | l_3_1_3         |
+| x690217         | l_3_1_4         |
+| x709042         | p_3_8_u         |
+| x718428         | p_2_10_b        |
+| x680872         | p_1_2_b         |
+| x723128         | p_0_11_b        |
+| x680858         | p_2_2_u         |
+| x723018         | l_1_0_11        |
+| x676000         | progress_1_9    |
+| x675999         | progress_1_8    |
+| x709044         | p_3_8_b         |
+| x718322         | l_1_0_10        |
+| x675992         | progress_1_1    |
+| x675991         | progress_1_0    |
+| x723126         | p_0_11_u        |
+| x675994         | progress_1_3    |
+| x675993         | progress_1_2    |
+| x676043         | p_3_0_u         |
+| x675996         | progress_1_5    |
+| x675995         | progress_1_4    |
+| x675998         | progress_1_7    |
+| x675997         | progress_1_6    |
+| x690256         | p_0_4_b         |
+| x699572         | l_2_2_6         |
+| x694876         | l_2_2_5         |
+| x708964         | l_2_2_8         |
+| x704268         | l_2_2_7         |
+| x718393         | l_3_1_10        |
+| x713660         | l_2_2_9         |
+| x723089         | l_3_1_11        |
+| x718426         | p_2_10_u        |
+| x676033         | l_2_2_0         |
+| x694950         | p_0_5_u         |
+| x680788         | l_2_2_2         |
+| x676092         | l_2_2_1         |
+| x676014         | progress_2_11   |
+| x690180         | l_2_2_4         |
+| x704348         | p_3_7_b         |
+| x676013         | progress_2_10   |
+| x685484         | l_2_2_3         |
+| x699610         | l_3_0_6         |
+| x704306         | l_3_0_7         |
+| x709002         | l_3_0_8         |
+| x713698         | l_3_0_9         |
+| x685566         | p_1_3_u         |
+| x676038         | l_3_0_0         |
+| x676164         | p_2_1_b         |
+| x676130         | l_3_0_1         |
+| x680826         | l_3_0_2         |
+| x685522         | l_3_0_3         |
+| x690218         | l_3_0_4         |
+| x694914         | l_3_0_5         |
+| x718314         | l_0_2_10        |
+| x713738         | p_3_9_u         |
+| x718394         | l_3_0_10        |
+| x723010         | l_0_2_11        |
+| x723090         | l_3_0_11        |
+| x718432         | p_0_10_b        |
+| x685554         | p_2_3_u         |
+| x694960         | p_1_5_b         |
+| x676011         | progress_2_8    |
+| x713740         | p_3_9_b         |
+| x676010         | progress_2_7    |
+| x723016         | l_1_2_11        |
+| x718320         | l_1_2_10        |
+| x676012         | progress_2_9    |
+| x676003         | progress_2_0    |
+| x676005         | progress_2_2    |
+| x704344         | p_0_7_b         |
+| x676004         | progress_2_1    |
+| x676007         | progress_2_4    |
+| x676170         | p_3_1_u         |
+| x676006         | progress_2_3    |
+| x676009         | progress_2_6    |
+| x718430         | p_0_10_u        |
+| x676008         | progress_2_5    |
+| x704269         | l_2_1_7         |
+| x699573         | l_2_1_6         |
+| x713661         | l_2_1_9         |
+| x708965         | l_2_1_8         |
+| x676044         | p_3_0_b         |
+| x676093         | l_2_1_1         |
+| x676034         | l_2_1_0         |
+| x685485         | l_2_1_3         |
+| x680789         | l_2_1_2         |
+| x676041         | p_0_0_u         |
+| x694877         | l_2_1_5         |
+| x690181         | l_2_1_4         |
+| x718438         | p_1_10_u        |
+| x709038         | p_0_8_u         |
+| x680860         | p_2_2_b         |
+| x699654         | p_1_6_u         |
+| x723054         | l_2_0_11        |
+| x718358         | l_2_0_10        |
+| x690250         | p_2_4_u         |
+| x690264         | p_1_4_b         |
+| x676022         | progress_3_7    |
+| x713624         | l_1_2_9         |
+| x676021         | progress_3_6    |
+| x708928         | l_1_2_8         |
+| x676024         | progress_3_9    |
+| x704232         | l_1_2_7         |
+| x676023         | progress_3_8    |
+| x699536         | l_1_2_6         |
+| x676056         | l_1_2_1         |
+| x676030         | l_1_2_0         |
+| x676016         | progress_3_1    |
+| x676015         | progress_3_0    |
+| x676018         | progress_3_3    |
+| x694840         | l_1_2_5         |
+| x676017         | progress_3_2    |
+| x680866         | p_3_2_u         |
+| x690144         | l_1_2_4         |
+| x699648         | p_0_6_b         |
+| x718440         | p_1_10_b        |
+| x676020         | progress_3_5    |
+| x685448         | l_1_2_3         |
+| x676019         | progress_3_4    |
+| x680752         | l_1_2_2         |
+| x708966         | l_2_0_8         |
+| x704270         | l_2_0_7         |
+| x723136         | p_1_11_b        |
+| x713662         | l_2_0_9         |
+| x676035         | l_2_0_0         |
+| x676172         | p_3_1_b         |
+| x704342         | p_0_7_u         |
+| x680790         | l_2_0_2         |
+| x676094         | l_2_0_1         |
+| x690182         | l_2_0_4         |
+| x685486         | l_2_0_3         |
+| x699574         | l_2_0_6         |
+| x694878         | l_2_0_5         |
+| x723134         | p_1_11_u        |
+| x685556         | p_2_3_b         |
+| x694958         | p_1_5_u         |
+| x704352         | p_1_7_b         |
+| x694946         | p_2_5_u         |
+| x675989         | progress_0_10   |
+| x676168         | p_0_1_b         |
+| x675990         | progress_0_11   |
+| x713625         | l_1_1_9         |
+| x708929         | l_1_1_8         |
+| x704233         | l_1_1_7         |
+| x680753         | l_1_1_2         |
+| x713736         | p_0_9_b         |
+| x676057         | l_1_1_1         |
+| x676031         | l_1_1_0         |
+| x699537         | l_1_1_6         |
+| x694841         | l_1_1_5         |
+| x723053         | l_2_1_11        |
+| x723130         | p_3_11_u        |
+| x685562         | p_3_3_u         |
+| x690145         | l_1_1_4         |
+| x718357         | l_2_1_10        |
+| x685449         | l_1_1_3         |
+| x709046         | p_1_8_u         |
+| x680868         | p_3_2_b         |
+| x680862         | p_0_2_u         |
+| x718436         | p_3_10_b        |
+| x690252         | p_2_4_b         |
+| x676045         | p_1_0_u         |
+| x708922         | l_0_2_8         |
+| x704226         | l_0_2_7         |
+| x713618         | l_0_2_9         |
+| x690138         | l_0_2_4         |
+| x699656         | p_1_6_b         |
+| x685442         | l_0_2_3         |
+| x699530         | l_0_2_6         |
+| x694834         | l_0_2_5         |
+| x676027         | l_0_2_0         |
+| x680746         | l_0_2_2         |
+| x676050         | l_0_2_1         |
+| x699642         | p_2_6_u         |
+| x713626         | l_1_0_9         |
+| x676042         | p_0_0_b         |
+| x708930         | l_1_0_8         |
+| x685450         | l_1_0_3         |
+| x680754         | l_1_0_2         |
+| x676058         | l_1_0_1         |
+| x676032         | l_1_0_0         |
+| x709040         | p_0_8_b         |
+| x704234         | l_1_0_7         |
+| x699538         | l_1_0_6         |
+| x694842         | l_1_0_5         |
+| x690146         | l_1_0_4         |
+| x690258         | p_3_4_u         |
+| x704350         | p_1_7_u         |
+| x718315         | l_0_1_10        |
+| x685564         | p_3_3_b         |
+| x676166         | p_0_1_u         |
+| x723132         | p_3_11_b        |
+| x713734         | p_0_9_u         |
+| x718356         | l_2_2_10        |
+| x723011         | l_0_1_11        |
+| x723052         | l_2_2_11        |
+| x694948         | p_2_5_b         |
+| x694954         | p_3_5_u         |
+| x676176         | p_1_1_b         |
+| x713619         | l_0_1_9         |
+| x708923         | l_0_1_8         |
+| x694835         | l_0_1_5         |
+| x690139         | l_0_1_4         |
+| x704227         | l_0_1_7         |
+| x699531         | l_0_1_6         |
+| x713744         | p_1_9_b         |
+| x676051         | l_0_1_1         |
+| x676028         | l_0_1_0         |
+| x685443         | l_0_1_3         |
+| x680747         | l_0_1_2         |
+| x704338         | p_2_7_u         |
+| x685560         | p_0_3_b         |
+| x690254         | p_0_4_u         |
+| x690260         | p_3_4_b         |
+| x676002         | progress_1_11   |
+| x676029         | l_0_0_0         |
+| x680870         | p_1_2_u         |
+| x699644         | p_2_6_b         |
+| x699650         | p_3_6_u         |
+| x676046         | p_1_0_b         |
+| x718392         | l_3_2_10        |
+| x723088         | l_3_2_11        |
+| x713620         | l_0_0_9         |
+| x676039         | p_2_0_u         |
+| x699532         | l_0_0_6         |
+| x694836         | l_0_0_5         |
+| x708924         | l_0_0_8         |
+| x709048         | p_1_8_b         |
+| x704228         | l_0_0_7         |
+| x680748         | l_0_0_2         |
+| x676052         | l_0_0_1         |
+| x690140         | l_0_0_4         |
+| x676001         | progress_1_10   |
+| x685444         | l_0_0_3         |
+| x709034         | p_2_8_u         |
+| x680864         | p_0_2_b         |
+| x723012         | l_0_0_11        |
+| x718316         | l_0_0_10        |
+| x718434         | p_3_10_u        |
+| x713742         | p_1_9_u         |
+| x694956         | p_3_5_b         |
+| x685558         | p_0_3_u         |
+| x690216         | l_3_2_4         |
+| x694912         | l_3_2_5         |
+| x699608         | l_3_2_6         |
+| x704304         | l_3_2_7         |
+| x709000         | l_3_2_8         |
+| x713696         | l_3_2_9         |
+| x676036         | l_3_2_0         |
+| x704340         | p_2_7_b         |
+| x676128         | l_3_2_1         |
+| x676174         | p_1_1_u         |
+| x680824         | l_3_2_2         |
+| x685520         | l_3_2_3         |
+=====================================
+Error found. Exiting...
