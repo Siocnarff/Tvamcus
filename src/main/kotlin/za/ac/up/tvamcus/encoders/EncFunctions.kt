@@ -15,10 +15,10 @@ import kotlin.math.log2
  */
 fun CFGS.encodeAsTemplateTransitionSet(): DisjunctiveSet<Transition> {
     val over: MutableSet<Transition> = mutableSetOf()
-    for((pId, process) in processes.withIndex()) {
+    for(process in processes) {
         for (transition in process.transitions) {
             over.add(
-                this.encTransition(pId, transition)
+                this.encTransition(process.id, transition)
             )
         }
     }
@@ -35,9 +35,9 @@ fun CFGS.deriveEncodedPredicates(): Set<String> {
         predicates.add("${p.value}_i_u")
         predicates.add("${p.value}_i_t")
     }
-    for ((pId, process) in this.processes.withIndex()) {
+    for (process in this.processes) {
         for (d in 0 until digitRequired(process.numberOfLocations())) {
-            predicates.add("n_i_${pId}_${d}")
+            predicates.add("n_i_${process.id}_${d}")
         }
     }
     return predicates
@@ -57,7 +57,7 @@ fun CFGS.encTransition(pId: Int, transition: CfgsTransition): Transition {
         pId,
         this.encLocation(pId, lId = transition.source, t =  "i"),
         encOperation(transition),
-        this.encLocation(pId = pId, lId = transition.destination, t = "I"),
+        this.encLocation(pId, lId = transition.destination, t = "I"),
         ConjunctiveSet(encIdleAllProcessesExcept(pId))
     )
 }
@@ -254,12 +254,12 @@ private fun encAssignmentChoice(predicateId: Int, left: String, right: String): 
  */
 private fun CFGS.encIdleAllProcessesExcept(activeProcess: Int): MutableSet<String> {
     val conjunctOver = mutableSetOf<String>()
-    for((pId, p) in this.processes.withIndex()) {
-        if(activeProcess != pId) {
+    for(p in this.processes) {
+        if(activeProcess != p.id) {
             val tally = p.numberOfLocations()
             for(locationId in 0..tally) {
                 for(d in 0..digitRequired(tally)) {
-                    conjunctOver.add("(n_i_${pId}_${d} <=> n_I_${pId}_${d})")
+                    conjunctOver.add("(n_i_${p.id}_${d} <=> n_I_${p.id}_${d})")
                 }
             }
         }

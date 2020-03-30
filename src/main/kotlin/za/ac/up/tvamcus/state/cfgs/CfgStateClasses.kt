@@ -6,7 +6,7 @@ data class CFGS (
     val processes: List<Process>
 )
 
-class Process(private val id: Int, val transitions: MutableList<CfgsTransition>) { //TODO: check if id can be removed
+class Process(val id: Int, val transitions: MutableList<CfgsTransition>) {
 
     /**
      * Counts number of locations in process it is called on
