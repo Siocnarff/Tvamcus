@@ -11,28 +11,42 @@ import za.ac.up.tvamcus.property.PropertySpecification
 import za.ac.up.tvamcus.state.cfgs.CFGS
 import za.ac.up.tvamcus.state.evaluation.State
 import za.ac.up.tvamcus.userout.printSatisfiable
-import java.lang.IllegalStateException
-import kotlin.math.E
 
 class Runner(private val cfgs: List<CFGS>, private val propertySpec: PropertySpecification) {
 
+    private val concrete = Evaluator(cfgs.first(), propertySpec)
+    private val abstract = Evaluator(cfgs.last(), propertySpec)
+
     fun evaluate(startFrom: Int = 0) {
         val timeLog = TimeLog()
-        val concrete = Evaluator(cfgs.first(), propertySpec)
-        if(propertySpec.multiModel) {
-            val abstract = Evaluator(cfgs.last(), propertySpec)
-            val aResult = abstract.evaluate(startFrom)
-            if(aResult.first == Tristate.UNDEF) {
-                val cResult =  concrete.evaluate(aResult.second.asFormula(), aResult.third, 0)
-                cResult.second.print()
-                printSatisfiable(timeLog.totalTime(), aResult.third)
+        val result = if(propertySpec.multiModel) {
+            evaluateMultiModel(startFrom)
+        } else {
+            evaluateUniModel(startFrom)
+        }
+        result.second.print()
+        printSatisfiable(timeLog.totalTime(), result.third)
+    }
+
+    private fun evaluateMultiModel(startFrom: Int = 0, pc: Formula = parse("${'$'}true")): Triple<Tristate, MutableList<State>, Int> {
+        val aResult = abstract.evaluate(startFrom, pc)
+        return if(aResult.first == Tristate.UNDEF) {
+            val cResult = concrete.evaluate(aResult.second.asFormula(), aResult.third, startFrom)
+            if(cResult.first == Tristate.TRUE) {
+                cResult
+            } else {
+                evaluateMultiModel(cResult.third, conjunct(aResult.second.asFormula()).negate())
             }
         } else {
-            val cResult = concrete.evaluate(startFrom)
-            cResult.second.print()
-            printSatisfiable(timeLog.totalTime(), cResult.third)
+            aResult
         }
     }
+
+    private fun evaluateUniModel(startFrom: Int): Triple<Tristate, MutableList<State>, Int> {
+        val concrete = Evaluator(cfgs.first(), propertySpec)
+        return concrete.evaluate(startFrom)
+    }
+
 
     private fun MutableList<State>.print() {
         this.forEachIndexed { index, stepStat ->

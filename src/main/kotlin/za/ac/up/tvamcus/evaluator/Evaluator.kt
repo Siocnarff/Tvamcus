@@ -18,6 +18,7 @@ import javax.naming.InsufficientResourcesException
 import kotlin.math.pow
 
 class Evaluator(controlFlowGraphState: CFGS, propertySpecification: PropertySpecification) {
+    private var runCount: Int = 0
     private val cfgs: CFGS = controlFlowGraphState
     private val propertySpec: PropertySpecification = propertySpecification
     private val taskBuilder: MCTaskBuilder = MCTaskBuilder(cfgs, propertySpec)
@@ -27,7 +28,8 @@ class Evaluator(controlFlowGraphState: CFGS, propertySpecification: PropertySpec
      * SAT-based k-bounded model checking runs from k = 0 to [propertySpec].bound +1
      */
     fun evaluate(startFrom: Int = 0, pc: Formula = parse("${'$'}true")): Triple<Tristate, MutableList<State>, Int> {
-        if(run.size != startFrom) {
+        if(runCount != startFrom) {
+            println("R: ${run.size}, S: $startFrom")
             throw InsufficientResourcesException(
                 "Cannot start from a timestep not yet reached in Evaluator.transitionsOverTime"
             )
@@ -51,16 +53,25 @@ class Evaluator(controlFlowGraphState: CFGS, propertySpecification: PropertySpec
                 }
             }
             run.add(taskBuilder.cfgAsFormula(t))
+            runCount++
         }
         return Triple(Tristate.FALSE, mutableListOf(), propertySpec.bound)
         //printNoErrorFound(timeLog.totalTime(), propertySpec.bound)
     }
 
-    fun evaluate(constraint: MutableSet<Formula>, k: Int, startFrom: Int = 0): Pair<Tristate, MutableList<State>> {
-        println("Begin Again")
+    fun evaluate(
+        constraint: MutableSet<Formula>,
+        k: Int,
+        startFrom: Int = 0
+    ): Triple<Tristate, MutableList<State>, Int> {
+        println("......................Begin Again")
         //val timeLog = TimeLog()
+        if(startFrom == 0) {
+            run.add(taskBuilder.init)
+        }
         for (t in startFrom..k) {
             run.add(taskBuilder.cfgAsFormula(t))
+            runCount++
         }
         val property = taskBuilder.propertyFormula(k)
         if (run.evaluateConjunctedWith(property, constraint, literal = "unknown") == Tristate.TRUE) {
@@ -69,10 +80,10 @@ class Evaluator(controlFlowGraphState: CFGS, propertySpecification: PropertySpec
             if (result == Tristate.UNDEF) {
                 throw IllegalArgumentException("Not supposed to have unknown here, ensure CFGS contains ALL predicates")
             } else if(result == Tristate.TRUE) {
-                return Pair(Tristate.TRUE, path)
+                return Triple(Tristate.TRUE, path, k)
             }
         }
-        return Pair(Tristate.FALSE, mutableListOf())
+        return Triple(Tristate.FALSE, mutableListOf(), k)
     }
 
     private fun MutableSet<Formula>.evaluateConjunctedWith(
