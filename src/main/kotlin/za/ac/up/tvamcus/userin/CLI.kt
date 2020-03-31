@@ -145,8 +145,8 @@ object CLI {
         var listTrimmed = this.dropLastWhile { it == ')' }.dropWhile { it == '(' }
         val list = mutableListOf<Int>()
         if (listTrimmed.decapitalize() == "all" || listTrimmed.decapitalize() == "a") {
-            for (pId in model.processes.indices) {
-                list.add(pId)
+            model.processes.forEach { p ->
+                list.add(p.id)
             }
         } else {
             while (listTrimmed.contains(',')) {

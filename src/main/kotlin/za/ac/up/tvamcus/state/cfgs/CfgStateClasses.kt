@@ -15,7 +15,7 @@ class Process(val id: Int, val transitions: MutableList<CfgsTransition>) {
      */
     fun numberOfLocations(): Int {
         var tally = 0
-        for (transition in this.transitions) {
+        this.transitions.forEach { transition ->
             if (transition.source > tally) {
                 tally = transition.source
             } else if (transition.destination > tally) {

@@ -30,7 +30,7 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Property
      */
     fun cfgAsFormula(upperTimestep: Int): Formula {
         val bigOr = mutableSetOf<Formula>()
-        templateTransitionSet.disjoinOver.forEach{ bigOr.add( it.asFormula(upperTimestep) ) }
+        templateTransitionSet.disjoinOver.mapTo(bigOr) { it.asFormula(upperTimestep) }
         return disjoin(bigOr)
     }
 
@@ -43,17 +43,17 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Property
      */
     private fun init(): Formula {
         val over = mutableListOf<Formula>()
-        for (pId in cfgs.processes.indices) {
-            over.add(parse(cfgs.encLocation(pId, lId = 0, t = "0")))
+        cfgs.processes.forEach { p ->
+            over.add(parse(cfgs.encLocation(p.id, lId = 0, t = "0")))
             if (propertySpec.type == "liveness") {
                 over.add(parse("~rd_0 & ~lv_0"))
-                over.add(parse(cfgs.encLocationCopy(pId, lId = 0, t = "0")))
-                if(propertySpec.fairnessOn) {
-                    over.add(parse("~fr_0_${pId}"))
+                over.add(parse(cfgs.encLocationCopy(p.id, lId = 0, t = "0")))
+                if (propertySpec.fairnessOn) {
+                    over.add(parse("~fr_0_${p.id}"))
                 }
             }
         }
-        for (predicate in cfgs.predicates) {
+        cfgs.predicates.forEach { predicate ->
             val initAs: Boolean? = cfgs.init[predicate.key]
             over.add(
                 if (initAs != null && !initAs) {
@@ -62,7 +62,7 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Property
                     parse(encIsTrue(predicateId = predicate.value, t = "0"))
                 }
             )
-            if(propertySpec.type == "liveness") {
+            if (propertySpec.type == "liveness") {
                 over.add(
                     if (initAs != null && !initAs) {
                         parse(encIsFalseCopy(predicateId = predicate.value, t = "0"))
@@ -76,13 +76,14 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Property
     }
 
     fun propertyFormula(t: Int): Formula {
-        return  if (propertySpec.type == "liveness") {
+        return if (propertySpec.type == "liveness") {
             livenessViolationProperty(t)
         } else {
             errorLocation(propertySpec.location, t)
         }
 
     }
+
     /**
      * Creates timestep specific formula from the [Transition] it is called on
      *
@@ -98,7 +99,7 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Property
             newLocation.asFormula(timestep),
             idle.asConjunctiveFormula(timestep)
         )
-        return if(propertySpec.type == "liveness") {
+        return if (propertySpec.type == "liveness") {
             conjunct(core, livenessEvaluationFormula(parentProcess, timestep))
         } else {
             core
@@ -114,7 +115,7 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Property
     private fun Operation.asFormula(timestep: Int): Formula {
         return conjunct(
             guard.asFormula(timestep),
-            assignments.asConjunctiveFormula (timestep)
+            assignments.asConjunctiveFormula(timestep)
         )
     }
 
@@ -128,7 +129,7 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Property
      */
     private fun livenessEvaluationFormula(lId: Int, timestep: Int): Formula {
         val conjunctiveSet = encStateRecording()
-        return if(!propertySpec.fairnessOn) {
+        return if (!propertySpec.fairnessOn) {
             conjunctiveSet.asConjunctiveFormula(timestep)
         } else {
             conjunct(
@@ -140,15 +141,15 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Property
 
     private fun ConjunctiveSet<String>.asConjunctiveFormula(timestep: Int): Formula {
         val bigAnd = mutableSetOf<Formula>()
-        conjunctOver.forEach{ bigAnd.add(it.asFormula(timestep)) }
+        conjunctOver.forEach { bigAnd.add(it.asFormula(timestep)) }
         return conjunct(bigAnd)
     }
 
     private fun fairnessConstraintFormula(lId: Int, timestep: Int): Formula {
         val bigAnd = mutableSetOf<Formula>()
         bigAnd.add("(fr_I_${lId} <=> (re_i | rd_i))".asFormula(timestep))
-        for(pId in cfgs.processes.indices.filterNot{ it == lId }) {
-            bigAnd.add(parse("(fr_${timestep + 1}_${pId} <=> fr_${timestep}_${pId})"))
+        cfgs.processes.filterNot { p -> p.id == lId }.mapTo(bigAnd) { p ->
+            (parse("(fr_${timestep + 1}_${p.id} <=> fr_${timestep}_${p.id})"))
         }
         return conjunct(bigAnd)
     }
@@ -163,11 +164,8 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Property
     private fun encStateRecording(): ConjunctiveSet<String> {
         val bigAnd = mutableSetOf<String>()
         bigAnd.add("(rd_I <=> (re_i | rd_i))")
-        encodedPredicates.distinct().forEach {
-            bigAnd.add(
-                "(${it.replace("i", "I")}_c <=> " +
-                        "(((re_i & ~rd_i) => $it) & (~(re_i & ~rd_i) => ${it}_c)))"
-            )
+        encodedPredicates.distinct().mapTo(bigAnd) { p ->
+            "(${p.replace("i", "I")}_c <=>  (((re_i & ~rd_i) => $p) & (~(re_i & ~rd_i) => ${p}_c)))"
         }
         bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${encProgressExpression(propertySpec.processList)})))")
         return ConjunctiveSet(bigAnd)
@@ -183,7 +181,7 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Property
      */
     private fun encProgressExpression(processIds: List<Int>): String {
         var progress = ""
-        for (pId in processIds) {
+        processIds.forEach { pId ->
             progress += cfgs.encLocation(pId, lId = propertySpec.location)
             progress += " ${propertySpec.operator} "
         }
@@ -200,8 +198,8 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Property
      */
     private fun errorLocation(lId: Int, timestep: Int): Formula {
         val toJoin = mutableListOf<Formula>()
-        for (pId in propertySpec.processList) {
-            toJoin.add(parse(cfgs.encLocation(pId, lId, timestep.toString())))
+        propertySpec.processList.mapTo(toJoin) { pId ->
+            parse(cfgs.encLocation(pId, lId, timestep.toString()))
         }
         return if (propertySpec.operator == '|') disjoin(toJoin) else conjunct(toJoin)
     }
@@ -221,13 +219,13 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Property
     private fun livenessViolationProperty(timestep: Int): Formula {
         val bigAnd = mutableSetOf<Formula>()
         bigAnd.add(parse("rd_$timestep"))
-        encodedPredicates.forEach {
-            bigAnd.add(parse("(${it.insertTimestep(timestep)} <=> ${it.insertTimestep(timestep)}_c)"))
+        encodedPredicates.mapTo(bigAnd) { p ->
+            parse("(${p.insertTimestep(timestep)} <=> ${p.insertTimestep(timestep)}_c)")
         }
         bigAnd.add(parse("~lv_$timestep"))
-        if(propertySpec.fairnessOn) {
-            for(pId in cfgs.processes.indices) {
-                bigAnd.add(parse("fr_${timestep}_$pId"))
+        if (propertySpec.fairnessOn) {
+            cfgs.processes.mapTo(bigAnd) { p ->
+                parse("fr_${timestep}_${p.id}")
             }
         }
         return conjunct(bigAnd)

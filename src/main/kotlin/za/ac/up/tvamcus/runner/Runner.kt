@@ -19,7 +19,7 @@ class Runner(private val cfgs: List<CFGS>, private val propertySpec: PropertySpe
 
     fun evaluate(startFrom: Int = 0) {
         val timeLog = TimeLog()
-        val result = if(propertySpec.multiModel) {
+        val result = if (propertySpec.multiModel) {
             evaluateMultiModel(startFrom)
         } else {
             evaluateUniModel(startFrom)
@@ -28,11 +28,14 @@ class Runner(private val cfgs: List<CFGS>, private val propertySpec: PropertySpe
         printSatisfiable(timeLog.totalTime(), result.third)
     }
 
-    private fun evaluateMultiModel(startFrom: Int = 0, pc: Formula = parse("${'$'}true")): Triple<Tristate, MutableList<State>, Int> {
+    private fun evaluateMultiModel(
+        startFrom: Int = 0,
+        pc: Formula = parse("${'$'}true")
+    ): Triple<Tristate, MutableList<State>, Int> {
         val aResult = abstract.evaluate(startFrom, pc)
-        return if(aResult.first == Tristate.UNDEF) {
+        return if (aResult.first == Tristate.UNDEF) {
             val cResult = concrete.evaluate(aResult.second.asFormula(), aResult.third, startFrom)
-            if(cResult.first == Tristate.TRUE) {
+            if (cResult.first == Tristate.TRUE) {
                 cResult
             } else {
                 evaluateMultiModel(cResult.third, conjunct(aResult.second.asFormula()).negate())
@@ -51,7 +54,7 @@ class Runner(private val cfgs: List<CFGS>, private val propertySpec: PropertySpe
     private fun MutableList<State>.print() {
         this.forEachIndexed { index, stepStat ->
             println("\n$index:")
-            println(stepStat.locationStatus)
+            println(stepStat.locationStatuses)
             println(stepStat.predicateStatus)
             println(stepStat.fairnessStatus)
             println(stepStat.reRdStatus)
@@ -63,10 +66,10 @@ class Runner(private val cfgs: List<CFGS>, private val propertySpec: PropertySpe
      */
     private fun MutableList<State>.asFormula(): MutableSet<Formula> {
         val bigAnd = mutableSetOf<Formula>()
-        for(step in this) {
-            for(location in step.locationStatus) {
-                bigAnd.add(
-                    parse(cfgs.first().encLocation(pId = location.first, lId = location.second, t = step.timestep))
+        this.forEach { step ->
+            step.locationStatuses.mapTo(bigAnd) {
+                parse(
+                    cfgs.first().encLocation(pId = it.first, lId = it.second, t = step.timestep)
                 )
             }
         }
