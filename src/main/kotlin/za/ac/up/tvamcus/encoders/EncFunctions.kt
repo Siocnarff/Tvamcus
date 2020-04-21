@@ -50,7 +50,7 @@ fun CFGS.deriveEncodedPredicates(): Set<String> {
  * by Definition 11 in SCP19
  *
  * @param pId the process to which the transition belongs
- * @param transition the [CFGS] transition being encoded
+ * @param transition the [CFGS] transition being encoded 1
  * @return Encoded Transition belonging to [pId], from i to I
  */
 fun CFGS.encTransition(pId: Int, transition: CfgsTransition): Transition {
