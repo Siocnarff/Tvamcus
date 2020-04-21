@@ -7,7 +7,7 @@ import za.ac.up.tvamcus.encoders.digitRequired
 import za.ac.up.tvamcus.logicng.LogicNG
 import za.ac.up.tvamcus.logicng.conjunct
 import za.ac.up.tvamcus.logicng.parse
-import za.ac.up.tvamcus.property.PropertySpecification
+import za.ac.up.tvamcus.property.Configuration
 import za.ac.up.tvamcus.state.cfgs.CFGS
 import za.ac.up.tvamcus.state.evaluation.State
 import za.ac.up.tvamcus.taskbuilder.MCTaskBuilder
@@ -16,10 +16,10 @@ import java.util.*
 import javax.naming.InsufficientResourcesException
 import kotlin.math.pow
 
-class Evaluator(controlFlowGraphState: CFGS, propertySpecification: PropertySpecification) {
+class Evaluator(controlFlowGraphState: CFGS, config: Configuration) {
     private var runCount: Int = 0
     private val cfgs: CFGS = controlFlowGraphState
-    private val propertySpec: PropertySpecification = propertySpecification
+    private val propertySpec: Configuration = config
     private val taskBuilder: MCTaskBuilder = MCTaskBuilder(cfgs, propertySpec)
     private val run: MutableSet<Formula> = mutableSetOf() // set of timestep encoded transition formulas
 
@@ -45,6 +45,7 @@ class Evaluator(controlFlowGraphState: CFGS, propertySpecification: PropertySpec
                 //path.print()
                 return if (run.evaluateConjunctedWith(property, literal = "~unknown") == Tristate.TRUE) {
                     //printSatisfiable(timeLog.totalTime(), t)
+                    //println("UnsatCore${LogicNG.solver.unsatCore()}")
                     Triple(Tristate.TRUE, path, t)
                 } else {
                     //printUnknown(timeLog.totalTime(), t)
@@ -127,12 +128,16 @@ class Evaluator(controlFlowGraphState: CFGS, propertySpecification: PropertySpec
     private fun SortedSet<Literal>.predicateEvaluation(timestep: Int): MutableList<String> {
         val predicateStatuses = mutableListOf<String>()
         cfgs.predicates.forEach { p ->
-            if (this.contains(LogicNG.ff.literal("${p.value}_${timestep}_u", true))) {
-                predicateStatuses.add("${p.key} = unknown")
-            } else if (this.contains(LogicNG.ff.literal("${p.value}_${timestep}_t", true))) {
-                predicateStatuses.add("${p.key} = true")
-            } else {
-                predicateStatuses.add("${p.key} = false")
+            when {
+                this.contains(LogicNG.ff.literal("${p.value}_${timestep}_u", true)) -> {
+                    predicateStatuses.add("${p.key} = unknown")
+                }
+                this.contains(LogicNG.ff.literal("${p.value}_${timestep}_t", true)) -> {
+                    predicateStatuses.add("${p.key} = true")
+                }
+                else -> {
+                    predicateStatuses.add("${p.key} = false")
+                }
             }
         }
         return predicateStatuses

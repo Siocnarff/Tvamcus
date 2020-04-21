@@ -12,7 +12,7 @@ import za.ac.up.tvamcus.state.cfgs.CFGS
  * @param fairnessOn if TRUE then fairness should be checked
  * @param multiModel if TRUE then MultiModel test approach should be used
  */
-data class PropertySpecification(
+data class Configuration(
     val type: String,
     val location: Int,
     val processList: List<Int>,

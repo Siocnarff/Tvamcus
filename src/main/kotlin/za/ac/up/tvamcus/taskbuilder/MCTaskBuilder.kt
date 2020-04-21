@@ -5,7 +5,7 @@ import za.ac.up.tvamcus.encoders.*
 import za.ac.up.tvamcus.logicng.conjunct
 import za.ac.up.tvamcus.logicng.disjoin
 import za.ac.up.tvamcus.logicng.parse
-import za.ac.up.tvamcus.property.PropertySpecification
+import za.ac.up.tvamcus.property.Configuration
 import za.ac.up.tvamcus.sets.ConjunctiveSet
 import za.ac.up.tvamcus.sets.DisjunctiveSet
 import za.ac.up.tvamcus.state.cfgs.CFGS
@@ -13,9 +13,9 @@ import za.ac.up.tvamcus.state.cfgs.CfgsTransition
 import za.ac.up.tvamcus.state.encoded.Operation
 import za.ac.up.tvamcus.state.encoded.Transition
 
-class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: PropertySpecification) {
+class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Configuration) {
     private val cfgs: CFGS = controlFlowGraphState
-    private val propertySpec: PropertySpecification = propertySpecification
+    private val propertySpec: Configuration = propertySpecification
     private val templateTransitionSet: DisjunctiveSet<Transition> = cfgs.encodeAsTemplateTransitionSet()
     private val encodedPredicates: Set<String> = cfgs.deriveEncodedPredicates()
     val init = init()
@@ -87,7 +87,7 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Property
     /**
      * Creates timestep specific formula from the [Transition] it is called on
      *
-     * Note, [PropertySpecification.type] is also taken into account when encoding the [Transition]
+     * Note, [Configuration.type] is also taken into account when encoding the [Transition]
      *
      * @param [timestep] timestep to encode [Transition] for
      * @return encoded formula of the [Transition]
@@ -210,7 +210,7 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Property
      * by Definition 14 in SCP20
      *
      * Encodes that a loop has been found at timestep [timestep]] in the state space of [cfgs] that violates liveness
-     * (under fairness if and only if [PropertySpecification.fairnessOn])
+     * (under fairness if and only if [Configuration.fairnessOn])
      *
      * @param [timestep] the timestep at which the loop closes
      * @return liveness violation property evaluation formula to

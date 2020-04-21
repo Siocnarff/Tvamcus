@@ -1,8 +1,7 @@
 package za.ac.up.tvamcus.userin
 
-import za.ac.up.tvamcus.evaluator.Evaluator
 import za.ac.up.tvamcus.parser.Parser
-import za.ac.up.tvamcus.property.PropertySpecification
+import za.ac.up.tvamcus.property.Configuration
 import za.ac.up.tvamcus.runner.Runner
 import za.ac.up.tvamcus.state.cfgs.CFGS
 import java.text.ParseException
@@ -12,19 +11,19 @@ object CLI {
     fun main(args: Array<String>) {
         try {
             val testPair = getTestPair()
-            val runner = Runner(cfgs = testPair.first, propertySpec = testPair.second)
+            val runner = Runner(cfgs = testPair.first, config = testPair.second)
             runner.evaluate()
         } catch (e: Exception) {
             println(e.localizedMessage)
         }
     }
 
-    private fun getTestPair(): Pair<MutableList<CFGS>, PropertySpecification> {
+    private fun getTestPair(): Pair<MutableList<CFGS>, Configuration> {
         val mm = multiModel()
         val cfgsList = allCFGS(mm)
         return Pair(
             cfgsList,
-            PropertySpecification (
+            Configuration (
                 multiModel = mm,
                 processList = commaSeparatedProcessList().extractCSList(cfgsList.first()),
                 type = type(),

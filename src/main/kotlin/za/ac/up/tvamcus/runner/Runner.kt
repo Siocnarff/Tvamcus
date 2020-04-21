@@ -7,19 +7,19 @@ import za.ac.up.tvamcus.evaluator.Evaluator
 import za.ac.up.tvamcus.logbook.TimeLog
 import za.ac.up.tvamcus.logicng.conjunct
 import za.ac.up.tvamcus.logicng.parse
-import za.ac.up.tvamcus.property.PropertySpecification
+import za.ac.up.tvamcus.property.Configuration
 import za.ac.up.tvamcus.state.cfgs.CFGS
 import za.ac.up.tvamcus.state.evaluation.State
 import za.ac.up.tvamcus.userout.printSatisfiable
 
-class Runner(private val cfgs: List<CFGS>, private val propertySpec: PropertySpecification) {
+class Runner(private val cfgs: List<CFGS>, private val config: Configuration) {
 
-    private val concrete = Evaluator(cfgs.first(), propertySpec)
-    private val abstract = Evaluator(cfgs.last(), propertySpec)
+    private val concrete = Evaluator(cfgs.first(), config)
+    private val abstract = Evaluator(cfgs.last(), config)
 
     fun evaluate(startFrom: Int = 0) {
         val timeLog = TimeLog()
-        val result = if (propertySpec.multiModel) {
+        val result = if (config.multiModel) {
             evaluateMultiModel(startFrom)
         } else {
             evaluateUniModel(startFrom)
@@ -46,7 +46,6 @@ class Runner(private val cfgs: List<CFGS>, private val propertySpec: PropertySpe
     }
 
     private fun evaluateUniModel(startFrom: Int): Triple<Tristate, MutableList<State>, Int> {
-        val concrete = Evaluator(cfgs.first(), propertySpec)
         return concrete.evaluate(startFrom)
     }
 

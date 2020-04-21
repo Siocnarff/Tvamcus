@@ -8,7 +8,11 @@ import org.logicng.solvers.MiniSat
 object LogicNG {
     val ff = FormulaFactory()
     val p = PropositionalParser(ff)
-    val solver: MiniSat = MiniSat.glucose(ff)
+    val solver: MiniSat = MiniSat.glucose(
+        ff
+        //MiniSatConfig.Builder().proofGeneration(true).build(),
+        //GlucoseConfig.Builder().build()
+    )
 }
 
 fun parse(f: String): Formula {
