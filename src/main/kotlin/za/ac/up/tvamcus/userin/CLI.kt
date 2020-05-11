@@ -1,5 +1,6 @@
 package za.ac.up.tvamcus.userin
 
+import org.apache.commons.cli.*
 import za.ac.up.tvamcus.parser.Parser
 import za.ac.up.tvamcus.property.Configuration
 import za.ac.up.tvamcus.runner.Runner
@@ -9,6 +10,7 @@ import java.text.ParseException
 object CLI {
     @JvmStatic
     fun main(args: Array<String>) {
+        val parser: CommandLineParser = DefaultParser();
         try {
             val testPair = getTestPair()
             val runner = Runner(cfgs = testPair.first, config = testPair.second)

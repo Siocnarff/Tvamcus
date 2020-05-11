@@ -4,6 +4,8 @@ import org.logicng.datastructures.Tristate
 import org.logicng.formulas.Formula
 import org.logicng.formulas.Literal
 import za.ac.up.tvamcus.encoders.digitRequired
+import za.ac.up.tvamcus.encoders.encLocation
+import za.ac.up.tvamcus.feedback.EvaluatorFeedback
 import za.ac.up.tvamcus.logicng.LogicNG
 import za.ac.up.tvamcus.logicng.conjunct
 import za.ac.up.tvamcus.logicng.parse
@@ -16,21 +18,19 @@ import java.util.*
 import javax.naming.InsufficientResourcesException
 import kotlin.math.pow
 
-class Evaluator(controlFlowGraphState: CFGS, config: Configuration) {
+class Evaluator(private val cfgs: CFGS, private val config: Configuration) {
     private var runCount: Int = 0
-    private val cfgs: CFGS = controlFlowGraphState
-    private val propertySpec: Configuration = config
-    private val taskBuilder: MCTaskBuilder = MCTaskBuilder(cfgs, propertySpec)
+    private val taskBuilder: MCTaskBuilder = MCTaskBuilder(this.cfgs, this.config)
     private val run: MutableSet<Formula> = mutableSetOf() // set of timestep encoded transition formulas
 
     /**
-     * SAT-based k-bounded model checking runs from k = 0 to [propertySpec].bound +1
+     * SAT-based k-bounded model checking runs from k = 0 to [config].bound +1
      */
-    fun evaluate(startFrom: Int = 0, pc: Formula = parse("${'$'}true")): Triple<Tristate, MutableList<State>, Int> {
+    fun evaluate(startFrom: Int = 0, pc: Formula = parse("${'$'}true")): EvaluatorFeedback {
         if (runCount != startFrom) {
             println("R: ${run.size}, S: $startFrom")
             throw InsufficientResourcesException(
-                "Cannot start from a timestep not yet reached in Evaluator.transitionsOverTime"
+                "Cannot start from a timestep not yet reached in Evaluator.run"
             )
         }
         //val timeLog = TimeLog()
@@ -38,24 +38,24 @@ class Evaluator(controlFlowGraphState: CFGS, config: Configuration) {
         if (startFrom == 0) {
             run.add(taskBuilder.init)
         }
-        for (t in startFrom..propertySpec.bound) {
+        for (t in startFrom..config.bound) {
             val property = taskBuilder.propertyFormula(t)
-            if (run.evaluateConjunctedWith(property, literal = "unknown") == Tristate.TRUE) {
-                val path = resultPathInfo(t)
+            val result = run.evaluateConjunctedWith(property, literal = "unknown")
+            if (result == Tristate.TRUE) {
+                val witness = resultPathInfo(t)
                 //path.print()
                 return if (run.evaluateConjunctedWith(property, literal = "~unknown") == Tristate.TRUE) {
                     //printSatisfiable(timeLog.totalTime(), t)
-                    //println("UnsatCore${LogicNG.solver.unsatCore()}")
-                    Triple(Tristate.TRUE, path, t)
+                    EvaluatorFeedback(Tristate.TRUE, witness, t)
                 } else {
                     //printUnknown(timeLog.totalTime(), t)
-                    Triple(Tristate.UNDEF, path, t)
+                    EvaluatorFeedback(Tristate.UNDEF, witness, t)
                 }
             }
             run.add(taskBuilder.cfgAsFormula(t))
             runCount++
         }
-        return Triple(Tristate.FALSE, mutableListOf(), propertySpec.bound)
+        return EvaluatorFeedback(Tristate.FALSE, mutableListOf(), config.bound)
         //printNoErrorFound(timeLog.totalTime(), propertySpec.bound)
     }
 
@@ -63,7 +63,7 @@ class Evaluator(controlFlowGraphState: CFGS, config: Configuration) {
         constraint: MutableSet<Formula>,
         k: Int,
         startFrom: Int = 0
-    ): Triple<Tristate, MutableList<State>, Int> {
+    ): EvaluatorFeedback {
         println("......................Begin Again")
         //val timeLog = TimeLog()
         if (startFrom == 0) {
@@ -73,31 +73,29 @@ class Evaluator(controlFlowGraphState: CFGS, config: Configuration) {
             run.add(taskBuilder.cfgAsFormula(t))
             runCount++
         }
-        val property = taskBuilder.propertyFormula(k)
-        if (run.evaluateConjunctedWith(property, constraint, literal = "unknown") == Tristate.TRUE) {
+        val property = conjunct(conjunct(constraint), taskBuilder.propertyFormula(k))
+        if (run.evaluateConjunctedWith(property, literal = "unknown") == Tristate.TRUE) {
             val path = resultPathInfo(k)
-            val result = run.evaluateConjunctedWith(property, constraint, literal = "~unknown")
+            val result = run.evaluateConjunctedWith(property, literal = "~unknown")
             if (result == Tristate.UNDEF) {
                 throw IllegalArgumentException("Not supposed to have unknown here, ensure CFGS contains ALL predicates")
             } else if (result == Tristate.TRUE) {
-                return Triple(Tristate.TRUE, path, k)
+                return EvaluatorFeedback(Tristate.TRUE, path, k)
             }
+        } else {
+            println("Witness: $property")
+            println("UnsatCore: ${LogicNG.solver.unsatCore()}")
         }
-        return Triple(Tristate.FALSE, mutableListOf(), k)
+        return EvaluatorFeedback(Tristate.FALSE, mutableListOf(), k)
     }
 
     private fun MutableSet<Formula>.evaluateConjunctedWith(
-        property: Formula,
-        constraint: MutableSet<Formula> = mutableSetOf(),
+        witness: Formula,
         literal: String
     ): Tristate {
         val startTime = System.nanoTime()
         LogicNG.solver.reset()
-        if (constraint.isNotEmpty()) {
-            LogicNG.solver.add(conjunct(conjunct(this), property, parse(literal), conjunct(constraint)))
-        } else {
-            LogicNG.solver.add(conjunct(conjunct(this), property, parse(literal)))
-        }
+        LogicNG.solver.add(conjunct(conjunct(this), witness, parse(literal)))
         val result = LogicNG.solver.sat()
         val endTime = System.nanoTime()
         printState(endTime - startTime, result.toString())
@@ -152,7 +150,7 @@ class Evaluator(controlFlowGraphState: CFGS, config: Configuration) {
      */
     private fun SortedSet<Literal>.fairnessEvaluation(timestep: Int): MutableList<String> {
         val fairnessVariableStatuses = mutableListOf<String>()
-        if (!propertySpec.fairnessOn) {
+        if (!config.fairnessOn) {
             fairnessVariableStatuses.add("n.a.")
             return fairnessVariableStatuses
         }
@@ -190,23 +188,6 @@ class Evaluator(controlFlowGraphState: CFGS, config: Configuration) {
         return processLocations
     }
 
-    private fun SortedSet<Literal>.pathInfo(bound: Int): MutableList<State> {
-        val steps = mutableListOf<State>()
-        for (k in 0 until bound + 1) {
-            steps.add(
-                State(
-                    k.toString(),
-                    this.locationEvaluation(k),
-                    this.predicateEvaluation(k),
-                    this.fairnessEvaluation(k),
-                    this.reRdEvaluation(k)
-                )
-            )
-
-        }
-        return steps
-    }
-
     private fun String.toInt(): Int {
         var tally = 0
         for ((index, c) in this.reversed().withIndex()) {
@@ -225,5 +206,22 @@ class Evaluator(controlFlowGraphState: CFGS, config: Configuration) {
 
     private fun evaluationResultLiterals(): SortedSet<Literal> {
         return LogicNG.solver.model().literals()
+    }
+
+    private fun SortedSet<Literal>.pathInfo(bound: Int): MutableList<State> {
+        val steps = mutableListOf<State>()
+        for (k in 0 until bound + 1) {
+            steps.add(
+                State(
+                    k.toString(),
+                    this.locationEvaluation(k),
+                    this.predicateEvaluation(k),
+                    this.fairnessEvaluation(k),
+                    this.reRdEvaluation(k)
+                )
+            )
+
+        }
+        return steps
     }
 }

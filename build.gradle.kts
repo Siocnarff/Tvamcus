@@ -13,6 +13,7 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("com.google.code.gson:gson:2.8.5")
     implementation("org.logicng:logicng:1.6.1")
+    implementation("commons-cli:commons-cli:1.4")
 }
 
 tasks {
@@ -24,7 +25,7 @@ tasks {
     //}
     jar {
         manifest {
-            attributes["Main-Class"] = "za.ac.up.tvamcus.userin.CLI"
+            attributes["Main-Class"] = "za.ac.up.tvamcus.userin.ArgCatcher"
         }
         from(
             configurations.compileClasspath.get().map {

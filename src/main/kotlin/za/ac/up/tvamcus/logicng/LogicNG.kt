@@ -4,14 +4,16 @@ import org.logicng.formulas.Formula
 import org.logicng.formulas.FormulaFactory
 import org.logicng.io.parsers.PropositionalParser
 import org.logicng.solvers.MiniSat
+import org.logicng.solvers.sat.GlucoseConfig
+import org.logicng.solvers.sat.MiniSatConfig
 
 object LogicNG {
     val ff = FormulaFactory()
     val p = PropositionalParser(ff)
     val solver: MiniSat = MiniSat.glucose(
-        ff
-        //MiniSatConfig.Builder().proofGeneration(true).build(),
-        //GlucoseConfig.Builder().build()
+        ff,
+        MiniSatConfig.Builder().proofGeneration(true).incremental(false).build(),
+        GlucoseConfig.Builder().build()
     )
 }
 

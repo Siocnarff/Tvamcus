@@ -4,7 +4,9 @@ import org.logicng.datastructures.Tristate
 import org.logicng.formulas.Formula
 import za.ac.up.tvamcus.encoders.encLocation
 import za.ac.up.tvamcus.evaluator.Evaluator
+import za.ac.up.tvamcus.feedback.EvaluatorFeedback
 import za.ac.up.tvamcus.logbook.TimeLog
+import za.ac.up.tvamcus.logicng.LogicNG
 import za.ac.up.tvamcus.logicng.conjunct
 import za.ac.up.tvamcus.logicng.parse
 import za.ac.up.tvamcus.property.Configuration
@@ -24,28 +26,33 @@ class Runner(private val cfgs: List<CFGS>, private val config: Configuration) {
         } else {
             evaluateUniModel(startFrom)
         }
-        result.second.print()
-        printSatisfiable(timeLog.totalTime(), result.third)
+        result.witness.print()
+        printSatisfiable(timeLog.totalTime(), result.k)
     }
 
     private fun evaluateMultiModel(
         startFrom: Int = 0,
         pc: Formula = parse("${'$'}true")
-    ): Triple<Tristate, MutableList<State>, Int> {
+    ): EvaluatorFeedback {
         val aResult = abstract.evaluate(startFrom, pc)
-        return if (aResult.first == Tristate.UNDEF) {
-            val cResult = concrete.evaluate(aResult.second.asFormula(), aResult.third, startFrom)
-            if (cResult.first == Tristate.TRUE) {
+        return if (aResult.satisfiable == Tristate.UNDEF) {
+            println("aResult: ${aResult.witness.asFormula()}")
+            println("Unsat Core ${LogicNG.solver.unsatCore()}")
+            val cResult = concrete.evaluate(aResult.witness.asFormula(), aResult.k, startFrom)
+            if (cResult.satisfiable == Tristate.TRUE) {
                 cResult
             } else {
-                evaluateMultiModel(cResult.third, conjunct(aResult.second.asFormula()).negate())
+                evaluateMultiModel(
+                    cResult.k,
+                    conjunct(aResult.witness.asFormula()).negate()
+                )
             }
         } else {
             aResult
         }
     }
 
-    private fun evaluateUniModel(startFrom: Int): Triple<Tristate, MutableList<State>, Int> {
+    private fun evaluateUniModel(startFrom: Int): EvaluatorFeedback {
         return concrete.evaluate(startFrom)
     }
 
