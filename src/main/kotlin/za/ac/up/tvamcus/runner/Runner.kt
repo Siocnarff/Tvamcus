@@ -9,19 +9,20 @@ import za.ac.up.tvamcus.logbook.TimeLog
 import za.ac.up.tvamcus.logicng.LogicNG
 import za.ac.up.tvamcus.logicng.conjunct
 import za.ac.up.tvamcus.logicng.parse
+import za.ac.up.tvamcus.property.Config
 import za.ac.up.tvamcus.property.Configuration
 import za.ac.up.tvamcus.state.cfgs.CFGS
 import za.ac.up.tvamcus.state.evaluation.State
 import za.ac.up.tvamcus.userout.printSatisfiable
 
-class Runner(private val cfgs: List<CFGS>, private val config: Configuration) {
+class Runner(private val cfgs: List<CFGS>, private val config: Config) {
 
     private val concrete = Evaluator(cfgs.first(), config)
     private val abstract = Evaluator(cfgs.last(), config)
 
     fun evaluate(startFrom: Int = 0) {
         val timeLog = TimeLog()
-        val result = if (config.multiModel) {
+        val result = if (config.MULTI_MODEL) {
             evaluateMultiModel(startFrom)
         } else {
             evaluateUniModel(startFrom)

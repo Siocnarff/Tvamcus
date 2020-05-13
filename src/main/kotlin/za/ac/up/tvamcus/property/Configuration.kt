@@ -21,3 +21,13 @@ data class Configuration(
     val fairnessOn: Boolean = false,
     val multiModel: Boolean = false
 )
+
+data class Config(
+    val LOCATION: Int,
+    val BOUND: Int,
+    val PROCESSES: List<Int>,
+    val DISJUNCT: Boolean = false,
+    val LIVENESS: Boolean = false,
+    val FAIRNESS: Boolean = false,
+    val MULTI_MODEL: Boolean = false
+)

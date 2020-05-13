@@ -3,8 +3,9 @@ package za.ac.up.tvamcus.taskbuilder
 import org.logicng.formulas.Formula
 import za.ac.up.tvamcus.encoders.*
 import za.ac.up.tvamcus.logicng.conjunct
-import za.ac.up.tvamcus.logicng.disjoin
+import za.ac.up.tvamcus.logicng.disjunct
 import za.ac.up.tvamcus.logicng.parse
+import za.ac.up.tvamcus.property.Config
 import za.ac.up.tvamcus.property.Configuration
 import za.ac.up.tvamcus.sets.ConjunctiveSet
 import za.ac.up.tvamcus.sets.DisjunctiveSet
@@ -13,9 +14,9 @@ import za.ac.up.tvamcus.state.cfgs.CfgsTransition
 import za.ac.up.tvamcus.state.encoded.Operation
 import za.ac.up.tvamcus.state.encoded.Transition
 
-class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Configuration) {
+class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Config) {
     private val cfgs: CFGS = controlFlowGraphState
-    private val propertySpec: Configuration = propertySpecification
+    private val propertySpec: Config = propertySpecification
     private val templateTransitionSet: DisjunctiveSet<Transition> = cfgs.encodeAsTemplateTransitionSet()
     private val encodedPredicates: Set<String> = cfgs.deriveEncodedPredicates()
     val init = init()
@@ -31,7 +32,7 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Configur
     fun cfgAsFormula(upperTimestep: Int): Formula {
         val bigOr = mutableSetOf<Formula>()
         templateTransitionSet.disjoinOver.mapTo(bigOr) { it.asFormula(upperTimestep) }
-        return disjoin(bigOr)
+        return disjunct(bigOr)
     }
 
     /**
@@ -45,10 +46,10 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Configur
         val over = mutableListOf<Formula>()
         cfgs.processes.forEach { p ->
             over.add(parse(cfgs.encLocation(p.id, lId = 0, t = "0")))
-            if (propertySpec.type == "liveness") {
+            if (propertySpec.LIVENESS) {
                 over.add(parse("~rd_0 & ~lv_0"))
                 over.add(parse(cfgs.encLocationCopy(p.id, lId = 0, t = "0")))
-                if (propertySpec.fairnessOn) {
+                if (propertySpec.FAIRNESS) {
                     over.add(parse("~fr_0_${p.id}"))
                 }
             }
@@ -62,7 +63,7 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Configur
                     parse(encIsTrue(predicateId = predicate.value, t = "0"))
                 }
             )
-            if (propertySpec.type == "liveness") {
+            if (propertySpec.LIVENESS) {
                 over.add(
                     if (initAs != null && !initAs) {
                         parse(encIsFalseCopy(predicateId = predicate.value, t = "0"))
@@ -76,10 +77,10 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Configur
     }
 
     fun propertyFormula(t: Int): Formula {
-        return if (propertySpec.type == "liveness") {
+        return if (propertySpec.LIVENESS) {
             livenessViolationProperty(t)
         } else {
-            errorLocation(propertySpec.location, t)
+            errorLocation(propertySpec.LOCATION, t)
         }
 
     }
@@ -99,7 +100,7 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Configur
             newLocation.asFormula(timestep),
             idle.asConjunctiveFormula(timestep)
         )
-        return if (propertySpec.type == "liveness") {
+        return if (propertySpec.LIVENESS) {
             conjunct(core, livenessEvaluationFormula(parentProcess, timestep))
         } else {
             core
@@ -129,7 +130,7 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Configur
      */
     private fun livenessEvaluationFormula(lId: Int, timestep: Int): Formula {
         val conjunctiveSet = encStateRecording()
-        return if (!propertySpec.fairnessOn) {
+        return if (!propertySpec.FAIRNESS) {
             conjunctiveSet.asConjunctiveFormula(timestep)
         } else {
             conjunct(
@@ -167,7 +168,7 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Configur
         encodedPredicates.distinct().mapTo(bigAnd) { p ->
             "(${p.replace("i", "I")}_c <=>  (((re_i & ~rd_i) => $p) & (~(re_i & ~rd_i) => ${p}_c)))"
         }
-        bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${encProgressExpression(propertySpec.processList)})))")
+        bigAnd.add("(lv_I <=> (lv_i | ((re_i | rd_i) & ${encProgressExpression(propertySpec.PROCESSES)})))")
         return ConjunctiveSet(bigAnd)
     }
 
@@ -182,8 +183,8 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Configur
     private fun encProgressExpression(processIds: List<Int>): String {
         var progress = ""
         processIds.forEach { pId ->
-            progress += cfgs.encLocation(pId, lId = propertySpec.location)
-            progress += " ${propertySpec.operator} "
+            progress += cfgs.encLocation(pId, lId = propertySpec.LOCATION)
+            progress += if(propertySpec.DISJUNCT) " | " else " & "
         }
         return progress.dropLast(3)
     }
@@ -198,10 +199,10 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Configur
      */
     private fun errorLocation(lId: Int, timestep: Int): Formula {
         val toJoin = mutableListOf<Formula>()
-        propertySpec.processList.mapTo(toJoin) { pId ->
+        propertySpec.PROCESSES.mapTo(toJoin) { pId ->
             parse(cfgs.encLocation(pId, lId, timestep.toString()))
         }
-        return if (propertySpec.operator == '|') disjoin(toJoin) else conjunct(toJoin)
+        return if (propertySpec.DISJUNCT) disjunct(toJoin) else conjunct(toJoin)
     }
 
     /**
@@ -223,7 +224,7 @@ class MCTaskBuilder(controlFlowGraphState: CFGS, propertySpecification: Configur
             parse("(${p.insertTimestep(timestep)} <=> ${p.insertTimestep(timestep)}_c)")
         }
         bigAnd.add(parse("~lv_$timestep"))
-        if (propertySpec.fairnessOn) {
+        if (propertySpec.FAIRNESS) {
             cfgs.processes.mapTo(bigAnd) { p ->
                 parse("fr_${timestep}_${p.id}")
             }

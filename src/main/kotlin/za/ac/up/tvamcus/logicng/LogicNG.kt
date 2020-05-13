@@ -31,11 +31,11 @@ fun conjunct(vararg v: Formula): Formula {
     return LogicNG.ff.and(formulas)
 }
 
-fun disjoin(formulas: MutableCollection<Formula>): Formula {
+fun disjunct(formulas: MutableCollection<Formula>): Formula {
     return LogicNG.ff.or(formulas)
 }
 
-fun disjoin(vararg v: Formula): Formula {
+fun disjunct(vararg v: Formula): Formula {
     val formulas = mutableListOf<Formula>()
     formulas.addAll(v)
     return LogicNG.ff.or(formulas)

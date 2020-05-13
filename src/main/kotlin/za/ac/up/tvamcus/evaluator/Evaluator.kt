@@ -9,6 +9,7 @@ import za.ac.up.tvamcus.feedback.EvaluatorFeedback
 import za.ac.up.tvamcus.logicng.LogicNG
 import za.ac.up.tvamcus.logicng.conjunct
 import za.ac.up.tvamcus.logicng.parse
+import za.ac.up.tvamcus.property.Config
 import za.ac.up.tvamcus.property.Configuration
 import za.ac.up.tvamcus.state.cfgs.CFGS
 import za.ac.up.tvamcus.state.evaluation.State
@@ -18,7 +19,7 @@ import java.util.*
 import javax.naming.InsufficientResourcesException
 import kotlin.math.pow
 
-class Evaluator(private val cfgs: CFGS, private val config: Configuration) {
+class Evaluator(private val cfgs: CFGS, private val config: Config) {
     private var runCount: Int = 0
     private val taskBuilder: MCTaskBuilder = MCTaskBuilder(this.cfgs, this.config)
     private val run: MutableSet<Formula> = mutableSetOf() // set of timestep encoded transition formulas
@@ -38,7 +39,7 @@ class Evaluator(private val cfgs: CFGS, private val config: Configuration) {
         if (startFrom == 0) {
             run.add(taskBuilder.init)
         }
-        for (t in startFrom..config.bound) {
+        for (t in startFrom..config.BOUND) {
             val property = taskBuilder.propertyFormula(t)
             val result = run.evaluateConjunctedWith(property, literal = "unknown")
             if (result == Tristate.TRUE) {
@@ -55,7 +56,7 @@ class Evaluator(private val cfgs: CFGS, private val config: Configuration) {
             run.add(taskBuilder.cfgAsFormula(t))
             runCount++
         }
-        return EvaluatorFeedback(Tristate.FALSE, mutableListOf(), config.bound)
+        return EvaluatorFeedback(Tristate.FALSE, mutableListOf(), config.BOUND)
         //printNoErrorFound(timeLog.totalTime(), propertySpec.bound)
     }
 
@@ -150,7 +151,7 @@ class Evaluator(private val cfgs: CFGS, private val config: Configuration) {
      */
     private fun SortedSet<Literal>.fairnessEvaluation(timestep: Int): MutableList<String> {
         val fairnessVariableStatuses = mutableListOf<String>()
-        if (!config.fairnessOn) {
+        if (!config.FAIRNESS) {
             fairnessVariableStatuses.add("n.a.")
             return fairnessVariableStatuses
         }

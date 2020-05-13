@@ -10,14 +10,14 @@ import java.text.ParseException
 object CLI {
     @JvmStatic
     fun main(args: Array<String>) {
-        val parser: CommandLineParser = DefaultParser();
+        /*val parser: CommandLineParser = DefaultParser();
         try {
             val testPair = getTestPair()
             val runner = Runner(cfgs = testPair.first, config = testPair.second)
             runner.evaluate()
         } catch (e: Exception) {
             println(e.localizedMessage)
-        }
+        }*/
     }
 
     private fun getTestPair(): Pair<MutableList<CFGS>, Configuration> {

@@ -1,22 +1,49 @@
 package za.ac.up.tvamcus.userin
 
 import org.apache.commons.cli.*
+import za.ac.up.tvamcus.property.Config
+import za.ac.up.tvamcus.parser.Parser
+import za.ac.up.tvamcus.runner.Runner
+import za.ac.up.tvamcus.state.cfgs.CFGS
 
 
 object ArgCatcher {
     @JvmStatic
     fun main(args: Array<String>) {
-        val parser: CommandLineParser = DefaultParser()
+        val cfgsParser = Parser()
+        val clParser = DefaultParser()
         val options = setArgOptions()
-        val cmd: CommandLine = parser.parse(options, args)
-        if(cmd.hasOption("ef")) {
-            println("evaluate file")
-            println(cmd.getOptionValues("ef")[0])
-            println(cmd.getOptionValues("ef")[1])
+        val cmd= clParser.parse(options, args)
+        if(soundCommand(cmd)) {
+            val option = if(cmd.hasOption("er")) "er" else "el"
+            val eOptions = cmd.getOptionValues(option)
+            val processes = if(cmd.hasOption("p")) cmd.getOptionValue("p") else "all"
+            val models = mutableListOf<CFGS>(cfgsParser.parseFile("${eOptions[0]}.json"))
+            if(cmd.hasOption("mm")) {
+                models.add(cfgsParser.parseFile("${eOptions[0]}_0p.json"))
+            }
+            val conf = Config(
+                LOCATION = eOptions[1].toInt(),
+                BOUND = eOptions[2].toInt(),
+                PROCESSES = processes.extractCSList(models.first()),
+                DISJUNCT = cmd.hasOption("d"),
+                LIVENESS = cmd.hasOption("el"),
+                FAIRNESS = cmd.hasOption("f"),
+                MULTI_MODEL = cmd.hasOption("f")
+            )
+            val runner = Runner(cfgs = models, config = conf)
+            runner.evaluate()
         } else {
-            val formatter = HelpFormatter()
-            formatter.printHelp("Tvamcus", options);
+            printMalformedCommand(options)
         }
+    }
+
+    private fun printMalformedCommand(options: Options) {
+        println("==========================")
+        println("Your command was malformed")
+        println("==========================")
+        val formatter = HelpFormatter()
+        formatter.printHelp("Tvamcus", options)
     }
 
     private fun setArgOptions(): Options {
@@ -66,6 +93,40 @@ object ArgCatcher {
             true,
             "Accepts a comma-separated list of processes (by id) that should take part in evaluation, if not specified all processes take part."
         )
-        return options;
+        return options
+    }
+
+    private fun soundCommand(cmd: CommandLine): Boolean {
+        val userArgs = when {
+            cmd.hasOption("er") -> {
+                cmd.getOptionValues("er")
+            }
+            cmd.hasOption("el") -> {
+                cmd.getOptionValues("el")
+            }
+            else -> {
+                return false
+            }
+        }
+        if(userArgs[1].toIntOrNull() == null || userArgs[2].toIntOrNull() == null) {
+            return false
+        }
+        if(cmd.hasOption("p")) {
+            val processes = cmd.getOptionValue("p").split(",")
+            for (process in processes) {
+                if(process.toIntOrNull() == null) { return false }
+            }
+        }
+        return true
+    }
+
+    private fun String.extractCSList(model: CFGS): MutableList<Int> {
+        val list = mutableListOf<Int>()
+        if (this == "all") {
+            model.processes.mapTo(list) { it.id }
+        } else {
+           this.split(",").mapTo(list) { it.toInt() }
+        }
+        return list
     }
 }
