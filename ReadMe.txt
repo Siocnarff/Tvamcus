@@ -23,7 +23,7 @@ usage: Tvamcus
 
 Notice that the following command will work
 
-Find the jarfile allready built in Tvamcus → build → libs
+Find the jarfile already built in Tvamcus → build → libs
 
 java -jar Tvamcus-1.0.jar -er 4philosophers 3 20 -p 0,1,2,3 -mm
 
