@@ -18,9 +18,9 @@ object ArgCatcher {
             val option = if(cmd.hasOption("er")) "er" else "el"
             val eOptions = cmd.getOptionValues(option)
             val processes = if(cmd.hasOption("p")) cmd.getOptionValue("p") else "all"
-            val models = mutableListOf<CFGS>(cfgsParser.parseFile("${eOptions[0]}.json"))
+            val models = mutableListOf<CFGS>(cfgsParser.parseFile("files/${eOptions[0]}.json"))
             if(cmd.hasOption("mm")) {
-                models.add(cfgsParser.parseFile("${eOptions[0]}_0p.json"))
+                models.add(cfgsParser.parseFile("files/${eOptions[0]}_0p.json"))
             }
             val conf = Config(
                 LOCATION = eOptions[1].toInt(),
